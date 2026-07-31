@@ -1,0 +1,65 @@
+<!doctype html>
+<div class="popup" id="taskListPopup">
+  <div class="popup-content scrollable-content">
+    <div class="user-info-block"></div>
+    <div class="refresh-button-container">
+      <div class="popup-title-box"></div>
+      <div class="refresh-button-div">
+        <button class="refresh-btn-new" onclick="">
+          <span class="refresh-text">Refresh</span>
+          <span class="refresh-icon">⟳</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="taskList_container">
+      <!-- FILTERS -->
+
+      <div class="taskList_filterSection">
+        <div class="taskList_filterBox">
+          <label>Status</label>
+          <select
+            id="taskStatusFilter"
+            onchange="taskList_applyFilters()"
+          ></select>
+        </div>
+
+        <div class="taskList_filterBox">
+          <label>Service Type</label>
+          <select
+            id="taskServiceFilter"
+            onchange="taskList_applyFilters()"
+          ></select>
+        </div>
+
+        <div class="taskList_filterBox">
+          <label>Search Task</label>
+          <input
+            id="taskSearch"
+            type="text"
+            placeholder="Search here..."
+            onkeyup="taskList_applyFilters()"
+          />
+        </div>
+
+        <div class="taskList_filterBox">
+          <label>Select Name</label>
+          <select
+            id="taskOwnerFilter"
+            onchange="taskList_applyFilters()"
+          ></select>
+        </div>
+      </div>
+
+      <!-- TASK LIST -->
+
+      <div class="taskList_taskList" id="taskList_taskList"></div>
+    </div>
+
+    <div class="taskList_buttonRow">
+      <button class="red" onclick="backToMainScreenFromCreateTask()">
+        Back
+      </button>
+    </div>
+  </div>
+</div>
