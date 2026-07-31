@@ -44,7 +44,7 @@ async function submitPass() {
       };
 
       const response = await CALL_API(
-        "GET_DEVOTEE_ACCESS_BY_PASSWORD",
+        "GET_ACCESS_FOR_PARENTS_SEWAKARTA",
         request,
       );
 
