@@ -20,6 +20,7 @@ const SEWAKARTA_LIST = [
 ];
 let GET_TASK_LIST_RESPONSE = [];
 let TASK_MASTER = {};
+let STUDENT_SEWAKARTA_MAP = {};
 
 let selectedFile64String = "";
 let selectedfile = "";
@@ -53,10 +54,42 @@ function convertRowsToTaskMaster(data) {
   return result;
 }
 
+function GET_STUDENT_SEWAKARTA_MAP(data) {
+  try {
+    const result = {};
+
+    for (let i = 1; i < data.length; i++) {
+      const active = (data[i][1] || "").toString().trim(); // Active (Column B)
+      if (active !== "Y") continue;
+      const studentName = (data[i][6] || "").toString().trim(); // Student Name (Column G)
+      const sewakarta = (data[i][7] || "").toString().trim(); // Sewa Karta (Column H)
+      if (!studentName) continue;
+      result[studentName] = sewakarta;
+    }
+    console.log(result);
+    return result;
+  } catch (ex) {
+    throw ex;
+  }
+}
+
+const data = {
+  tasks: [
+    {
+      task: "Physical Abusing",
+      owner: "",
+      reviewer: "",
+    },
+  ],
+};
 async function createTaskBtnClick() {
   resetCreateTask();
   const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {});
-  TASK_MASTER = convertRowsToTaskMaster(response?.data);
+  TASK_MASTER = convertRowsToTaskMaster(response?.data?.taskMasterResponse);
+  TASK_MASTER["Behavioural Issues"] = data;
+  STUDENT_SEWAKARTA_MAP = GET_STUDENT_SEWAKARTA_MAP(
+    response?.data?.stdDatabaseResponse,
+  );
   SET_DIV_TITLE("createTaskPopup", "Create Task");
   const categorySelect = document.getElementById("categorySelect");
   const taskButtonsContainer = document.getElementById("taskButtonsContainer");

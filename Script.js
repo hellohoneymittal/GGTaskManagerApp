@@ -16,20 +16,39 @@ document.querySelectorAll(".accordion-header").forEach((header) => {
 });
 
 document.addEventListener("DOMContentLoaded", async function () {
-  const loginData = await DB_GET(
-    INDEX_DB.keys.LOGIN,
+  const cacheResponse = await DB_GET(
+    "GET_ACCESS_FOR_PARENTS_SEWAKARTA",
     INDEX_DB.dbName,
     INDEX_DB.storeName,
   );
 
-  if (loginData) {
-    selectedUser = loginData;
-    selectedDevoteeName = loginData?.name;
-    renderMenus(loginData?.role);
+  if (cacheResponse) {
+    selectedUser = cacheResponse?.data;
+    selectedDevoteeName = cacheResponse?.data?.name;
+    renderMenus(cacheResponse?.data?.role);
+    checkTaskListAccess(cacheResponse);
   } else {
     SHOW_SPECIFIC_DIV("passwordPopup");
   }
 });
+
+function checkTaskListAccess(response) {
+  if (response?.data?.loginType === "Sewakarta") {
+    document.getElementById("taskListBtn").style.display = "block";
+  } else {
+    document.getElementById("taskListBtn").style.display = "none";
+  }
+
+  const section = document.getElementById("taskAssignmentSection");
+
+  if (response?.data?.loginType === "Sewakarta") {
+    section.style.display = "block";
+  } else {
+    section.style.display = "none";
+  }
+}
+
+function updateTaskAssignmentVisibility() {}
 
 async function submitPass() {
   try {
@@ -43,30 +62,14 @@ async function submitPass() {
         password: password,
       };
 
-      const response = await CALL_API(
+      const response = await CALL_API_WITH_CACHE(
         "GET_ACCESS_FOR_PARENTS_SEWAKARTA",
         request,
       );
-
-      if (response?.status && response?.data) {
-        await DB_SET(
-          INDEX_DB.keys.LOGIN,
-          response?.data,
-          INDEX_DB.dbName,
-          INDEX_DB.storeName,
-        );
-        await DB_SET(
-          INDEX_DB.keys.APP_VERSION,
-          APP_CONFIG.VERSION,
-          INDEX_DB.dbName,
-          INDEX_DB.storeName,
-        );
-        selectedUser = response?.data;
-        selectedDevoteeName = response?.data?.name;
-        renderMenus(response?.data?.role);
-      } else {
-        SHOW_ERROR_POPUP("Please input some value in password fields");
-      }
+      selectedUser = response?.data;
+      selectedDevoteeName = response?.data?.name;
+      renderMenus(response?.data?.role);
+      checkTaskListAccess(response);
     }
   } catch (ex) {
     SHOW_ERROR_POPUP("In catch case:- submitPass");
@@ -395,7 +398,6 @@ function CREATE_ACCORDION_FROM_OBJECT(accordionContainerId, dataObject) {
       const responseContainer = document.createElement("div");
       responseContainer.classList.add("response-options");
       const radioGroupName = `${sectionTitle}-${index}`;
-      debugger;
 
       // Yes option
       const yesLabel = document.createElement("label");
