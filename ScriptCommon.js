@@ -1520,7 +1520,7 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 // Open (or create) database and object store
 function DB_OPEN_INTERNAL(dbName = "AppDB", storeName = "store") {
