@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   );
 
   if (cacheResponse) {
+    checkTaskListAccess(cacheResponse);
     selectedUser = cacheResponse?.data;
     selectedDevoteeName = cacheResponse?.data?.name;
     renderMenus(cacheResponse?.data?.role);
-    checkTaskListAccess(cacheResponse);
   } else {
     SHOW_SPECIFIC_DIV("passwordPopup");
   }
@@ -37,14 +37,6 @@ function checkTaskListAccess(response) {
     document.getElementById("taskListBtn").style.display = "block";
   } else {
     document.getElementById("taskListBtn").style.display = "none";
-  }
-
-  const section = document.getElementById("taskAssignmentSection");
-
-  if (response?.data?.loginType === "Sewakarta") {
-    section.style.display = "block";
-  } else {
-    section.style.display = "none";
   }
 }
 
@@ -66,10 +58,10 @@ async function submitPass() {
         "GET_ACCESS_FOR_PARENTS_SEWAKARTA",
         request,
       );
+      checkTaskListAccess(response);
       selectedUser = response?.data;
       selectedDevoteeName = response?.data?.name;
       renderMenus(response?.data?.role);
-      checkTaskListAccess(response);
     }
   } catch (ex) {
     SHOW_ERROR_POPUP("In catch case:- submitPass");

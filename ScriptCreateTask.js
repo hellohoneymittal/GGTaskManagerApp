@@ -20,8 +20,8 @@ const SEWAKARTA_LIST = [
 ];
 let GET_TASK_LIST_RESPONSE = [];
 let TASK_MASTER = {};
-let STUDENT_SEWAKARTA_MAP = {};
-
+let taskDueDays = 0;
+let SF_MAP = {};
 let selectedFile64String = "";
 let selectedfile = "";
 let selectedFileType = "";
@@ -37,6 +37,7 @@ function convertRowsToTaskMaster(data) {
     const task = row[2];
     const owner = row[3];
     const reviewer = row[4];
+    const dueDays = Number(row[5]) || "";
 
     if (!result[serviceType]) {
       result[serviceType] = {
@@ -48,48 +49,106 @@ function convertRowsToTaskMaster(data) {
       task,
       owner,
       reviewer,
+      dueDays,
     });
   }
 
   return result;
 }
 
-function GET_STUDENT_SEWAKARTA_MAP(data) {
-  try {
-    const result = {};
+let behaviouralTask = [
+  {
+    task: "Student behavioural issues",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+  {
+    task: "Discipline monitoring",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+];
 
-    for (let i = 1; i < data.length; i++) {
-      const active = (data[i][1] || "").toString().trim(); // Active (Column B)
-      if (active !== "Y") continue;
-      const studentName = (data[i][6] || "").toString().trim(); // Student Name (Column G)
-      const sewakarta = (data[i][7] || "").toString().trim(); // Sewa Karta (Column H)
-      if (!studentName) continue;
-      result[studentName] = sewakarta;
-    }
-    console.log(result);
-    return result;
-  } catch (ex) {
-    throw ex;
+function applyTaskSectionVisibility(category) {
+  const loginType = selectedUser?.loginType;
+
+  const normalDiv = document.getElementById("taskOwnerReviewerDiv");
+  const behaviouralDiv = document.getElementById("behaviouralTaskDiv");
+  const behaviouralOwnerDiv = document.getElementById(
+    "behaviouralTaskDivReviewer",
+  );
+
+  // Hide everything by default
+  normalDiv.style.display = "none";
+  behaviouralDiv.style.display = "none";
+  behaviouralOwnerDiv.style.display = "none";
+
+  switch (loginType) {
+    case "Sewakarta":
+      taskListBtn.style.display = "block";
+
+      // Nothing selected
+      if (!category) return;
+
+      if (category === "Behavioural Issues") {
+        loadBehaviouralStudents();
+
+        // Show Behavioural Section
+        behaviouralDiv.style.display = "block";
+
+        // Sewakarta can see Task Owner
+        behaviouralOwnerDiv.style.display = "block";
+      } else {
+        // Normal Categories
+        normalDiv.style.display = "block";
+      }
+      break;
+
+    case "Parents":
+      // Parents don't have task list
+      taskListBtn.style.display = "none";
+
+      if (!category) return;
+
+      if (category === "Behavioural Issues") {
+        loadBehaviouralStudents();
+
+        // Show only student dropdown
+        behaviouralDiv.style.display = "block";
+
+        // Hide Task Owner
+        behaviouralOwnerDiv.style.display = "none";
+      } else {
+        // Agar Parent ke liye normal categories bhi allowed hain
+        normalDiv.style.display = "none";
+      }
+      break;
+
+    default:
+      taskListBtn.style.display = "none";
+      break;
   }
 }
 
-const data = {
-  tasks: [
-    {
-      task: "Physical Abusing",
-      owner: "",
-      reviewer: "",
-    },
-  ],
-};
 async function createTaskBtnClick() {
   resetCreateTask();
-  const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {});
+  applyTaskSectionVisibility("");
+  const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {}, 24);
   TASK_MASTER = convertRowsToTaskMaster(response?.data?.taskMasterResponse);
-  TASK_MASTER["Behavioural Issues"] = data;
-  STUDENT_SEWAKARTA_MAP = GET_STUDENT_SEWAKARTA_MAP(
+  SF_MAP = CREATE_MAP(
     response?.data?.stdDatabaseResponse,
+    6,
+    7,
+    (row) => row[1] === "Y",
+    (a, b) => a[0].localeCompare(b[0]),
   );
+
+  TASK_MASTER["Behavioural Issues"] = {
+    tasks: behaviouralTask,
+  };
+
   SET_DIV_TITLE("createTaskPopup", "Create Task");
   const categorySelect = document.getElementById("categorySelect");
   const taskButtonsContainer = document.getElementById("taskButtonsContainer");
@@ -109,7 +168,7 @@ async function createTaskBtnClick() {
 
   categorySelect.addEventListener("change", () => {
     const selectedCategory = categorySelect.value;
-
+    applyTaskSectionVisibility(selectedCategory);
     taskButtonsContainer.innerHTML = "";
     taskDescription.value = "";
     taskOwner.value = "";
@@ -137,6 +196,7 @@ async function createTaskBtnClick() {
         taskOwner.value = taskObj.owner;
 
         taskReviewer.value = taskObj.reviewer;
+        taskDueDays = taskObj.dueDays;
       });
 
       taskButtonsContainer.appendChild(button);
@@ -144,6 +204,33 @@ async function createTaskBtnClick() {
   });
 
   SHOW_SPECIFIC_DIV("createTaskPopup");
+}
+
+function loadBehaviouralStudents() {
+  const studentSelect = document.getElementById("behaviouralSelect");
+  const taskOwner = document.getElementById("behaviouralTaskOwner");
+
+  studentSelect.innerHTML = '<option value="">Select Student</option>';
+
+  taskOwner.value = "";
+
+  Object.keys(SF_MAP).forEach((student) => {
+    const option = document.createElement("option");
+    option.value = student;
+    option.textContent = student;
+
+    studentSelect.appendChild(option);
+  });
+
+  studentSelect.onchange = function () {
+    const selectedStudent = this.value;
+    if (!selectedStudent) {
+      taskOwner.value = "";
+      return;
+    }
+    const owner = SF_MAP[selectedStudent];
+    taskOwner.value = owner === "NA" ? "Disciplinary Team" : owner;
+  };
 }
 
 function resetCreateTask() {
@@ -225,21 +312,44 @@ function ctFetchFile() {
 
 async function createNewTaskBtnClick() {
   const category = document.getElementById("categorySelect").value;
+  const description = document.getElementById("taskDescription").value.trim();
+
+  const isBehavioural = category === "Behavioural Issues";
+
+  // Normal task controls
   const owner = document.getElementById("taskOwner").value;
   const reviewer = document.getElementById("taskReviewer").value;
-  const description = document.getElementById("taskDescription").value.trim();
+
+  // Behavioural task controls
+  const behaviouralOwner = document.getElementById(
+    "behaviouralTaskOwner",
+  ).value;
+
+  const studentName = document.getElementById("behaviouralSelect").value;
 
   if (!category) {
     SHOW_ERROR_POPUP("Please select category");
     return;
   }
 
-  if (!owner) {
-    SHOW_ERROR_POPUP(
-      "Please select a predefined task first before proceeding.",
-    );
-    //SHOW_ERROR_POPUP("Task owner missing");
-    return;
+  if (isBehavioural) {
+    if (!studentName) {
+      SHOW_ERROR_POPUP("Please select student");
+      return;
+    }
+    if (!behaviouralOwner) {
+      SHOW_ERROR_POPUP(
+        "Please select a predefined behavioural task first before proceeding.",
+      );
+      return;
+    }
+  } else {
+    if (!owner) {
+      SHOW_ERROR_POPUP(
+        "Please select a predefined task first before proceeding.",
+      );
+      return;
+    }
   }
 
   if (!description) {
@@ -251,17 +361,22 @@ async function createNewTaskBtnClick() {
 
   const payload = {
     category: category,
-    owner: owner,
+    owner: isBehavioural ? behaviouralOwner : owner,
+    reviewer: isBehavioural ? "" : reviewer,
     description: description,
     createdBy: selectedDevoteeName,
-    reviewer: reviewer,
+    studentName: isBehavioural ? studentName : "",
     selectedFile64String: selectedFile64String ?? "",
     selectedFileType: selectedfile?.type ?? "",
     selectedFileName: selectedfile?.name ?? "",
+    dueDays: taskDueDays,
   };
 
   const response = await CALL_API("CREATE_TASK", payload);
-  SHOW_SUCCESS_POPUP("Task Created Successfully");
+  if (response) {
+    SHOW_SUCCESS_POPUP("Task Created Successfully");
+  }
+
   resetCreateTask();
 }
 
@@ -282,182 +397,6 @@ function taskList_getStatusClass(status) {
   }
 
   return "taskList_progress";
-}
-
-// RENDER TASKS
-
-function old_taskList_renderTasks(tasks = taskList_data) {
-  const taskListContainer = document.getElementById("taskList_taskList");
-
-  taskListContainer.innerHTML = "";
-
-  tasks.forEach((task, index) => {
-    let actionButtons = "";
-
-    if (task.status === "In Review") {
-      actionButtons = `
-    <button
-      class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
-      onclick="${task.canReview ? `taskList_updateStatus(${index}, 'Move Back')` : ""}"
-      ${task.canReview ? "" : "disabled"}>
-      Move Back
-    </button>
-
-    <button
-      class="taskList_btn taskList_closeBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
-      onclick="${task.canReview ? `taskList_updateStatus(${index}, 'Closed')` : ""}"
-      ${task.canReview ? "" : "disabled"}>
-      Close
-    </button>
-  `;
-    } else {
-      actionButtons = `
-    <button
-      class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
-      onclick="${task.canReview ? `taskList_updateStatus(${index}, 'In Progress')` : ""}"
-      ${task.canReview ? "" : "disabled"}>
-      In Progress
-    </button>
-
-    <button
-      class="taskList_btn taskList_closeBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
-      onclick="${task.canReview ? `taskList_updateStatus(${index}, 'In Review')` : ""}"
-      ${task.canReview ? "" : "disabled"}>
-      In Review
-    </button>
-  `;
-    }
-
-    taskListContainer.innerHTML += `
-
-      <div class="taskList_card">
-
-        <!-- HEADER -->
-        <div
-          class="taskList_cardHeader"
-          onclick="taskList_toggleAccordion(this)"
-        >
-
-          <div class="taskList_cardTop">
-
-            <div class="taskList_title_div">
-
-              <div class="taskList_title">
-                ${(task.actionDescription || "")
-                  .replace(/\r\n/g, "<br>")
-                  .replace(/\n/g, "<br>")}
-              </div>
-
-              <span class="taskList_category">
-                ${task.ticketFor}
-              </span>
-
-              <div class="taskList_status ${taskList_getStatusClass(task.status || "Pending")}">
-                ${task.status || "Pending"}
-              </div>
-
-            </div>
-
-            <div class="taskList_right">
-              <div class="taskList_accordionIcon">
-                ▶
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        <!-- CONTENT -->
-        <div class="taskList_content">
-
-          <div class="taskList_contentInner">
-
-            <div class="taskList_details">
-
-              <div class="taskList_detailBox">
-                <div class="taskList_detailTitle">
-                  Task Owner
-                </div>
-
-                <div class="taskList_detailValue">
-                  ${task.actionOwnerName}
-                </div>
-              </div>
-
-               <div class="taskList_detailBox">
-                <div class="taskList_detailTitle">
-                  Task Reviewer
-                </div>
-
-                <div class="taskList_detailValue">
-                  ${task.reviewerName}
-                </div>
-              </div>
-
-              <div class="taskList_detailBox">
-                <div class="taskList_detailTitle">
-                  Created By
-                </div>
-
-                <div class="taskList_detailValue">
-                  ${task.createdBy}
-                </div>
-              </div>
-
-              <div class="taskList_detailBox">
-                <div class="taskList_detailTitle">
-                  Created On
-                </div>
-
-                <div class="taskList_detailValue">
-                  ${task.date}
-                </div>
-              </div>
-
-            </div>
-
-            <div>
-            <label class="taskList_commentLabel">
-              Comment <span style="color:red">*</span>
-            </label>
-
-            <textarea
-              id="taskComment_${index}"
-              class="taskList_commentBox"
-              placeholder="Enter your comment..."
-            ></textarea>
-            </div>
-
-            <div class="button-row">
-
-              ${
-                task.uploadedImage
-                  ? `
-                    <button
-                      class="taskList_btn taskList_viewBtn"
-                      onclick="window.open('${task.uploadedImage}')"
-                    >
-                      View Attachment
-                    </button>
-                  `
-                  : ""
-              }
-
-               ${actionButtons}
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    `;
-  });
-
-  SHOW_SPECIFIC_DIV("taskListPopup");
 }
 
 function taskList_renderTasks(tasks = taskList_data) {
@@ -656,7 +595,6 @@ function taskList_toggleAccordion(element) {
   }
 }
 
-// INITIAL LOAD
 async function showTaskListPopup() {
   const response = await CALL_API("GET_ISSUE_TRACKERSHEET_DATA", {
     sheetName: "Pending Actions",
@@ -669,19 +607,6 @@ async function showTaskListPopup() {
   taskList_bindFilters();
   taskList_applyFilters();
   SET_DIV_TITLE("taskListPopup", "Task List");
-}
-
-function old_PrepareTaskListData() {
-  taskList_data = [...taskList_allData]
-    .filter((task) => task.ticketFor?.startsWith("ServiceApp"))
-    .map((task) => ({
-      ...task,
-      canReview:
-        ((task.status === "Pending" || task.status === "In Progress") &&
-          task.actionOwnerName === selectedDevoteeName) ||
-        (task.status === "In Review" &&
-          task.reviewerName === selectedDevoteeName),
-    }));
 }
 
 function PrepareTaskListData() {
@@ -699,58 +624,6 @@ function PrepareTaskListData() {
           (status === "In Review" && task.reviewerName === selectedDevoteeName),
       };
     });
-}
-
-function old_taskList_bindFilters() {
-  const statusDDL = document.getElementById("taskStatusFilter");
-  const serviceDDL = document.getElementById("taskServiceFilter");
-  const ownerDDL = document.getElementById("taskOwnerFilter");
-
-  const statuses = [
-    ...new Set(taskList_data.map((x) => x.status || "Pending")),
-  ].sort();
-
-  const services = [...new Set(taskList_data.map((x) => x.ticketFor))].sort();
-
-  let owners = [
-    ...new Set(
-      taskList_data.flatMap((x) => [x.actionOwnerName, x.reviewerName]),
-    ),
-  ]
-    .filter(Boolean)
-    .sort();
-
-  // Add selected devotee at top if available
-  if (selectedDevoteeName && !owners.includes(selectedDevoteeName)) {
-    owners.unshift(selectedDevoteeName);
-  } else if (selectedDevoteeName) {
-    owners = [
-      selectedDevoteeName,
-      ...owners.filter((x) => x !== selectedDevoteeName),
-    ];
-  }
-
-  statusDDL.innerHTML = '<option value="All">All</option>';
-  serviceDDL.innerHTML = '<option value="All">All</option>';
-  ownerDDL.innerHTML = '<option value="All">All</option>';
-
-  statuses.forEach((x) => {
-    statusDDL.innerHTML += `<option value="${x}">${x}</option>`;
-  });
-
-  services.forEach((x) => {
-    serviceDDL.innerHTML += `<option value="${x}">${x}</option>`;
-  });
-
-  owners.forEach((x) => {
-    ownerDDL.innerHTML += `<option value="${x}">${x}</option>`;
-  });
-
-  // Auto select current devotee
-  if (selectedDevoteeName) {
-    ownerDDL.value = selectedDevoteeName;
-    taskList_applyFilters();
-  }
 }
 
 function taskList_bindFilters() {
@@ -808,66 +681,6 @@ function taskList_bindFilters() {
 
   // Initial render using current filters
   taskList_applyFilters();
-}
-
-function old_taskList_applyFilters() {
-  const status = document.getElementById("taskStatusFilter").value;
-  const service = document.getElementById("taskServiceFilter").value;
-  const owner = document.getElementById("taskOwnerFilter").value;
-  const search = document
-    .getElementById("taskSearch")
-    .value.trim()
-    .toLowerCase();
-
-  const filtered = taskList_allData.filter((task) => {
-    const taskStatus = task.status || "Pending";
-
-    // Status Filter
-    if (status !== "All" && taskStatus !== status) {
-      return false;
-    }
-
-    // Service Filter
-    if (service !== "All" && task.ticketFor !== service) {
-      return false;
-    }
-
-    // Owner Filter
-    if (owner !== "All") {
-      const taskOwner =
-        taskStatus === "In Review"
-          ? task.reviewerName || ""
-          : task.actionOwnerName || "";
-
-      if (taskOwner !== owner) {
-        return false;
-      }
-    }
-
-    // Search Filter
-    if (search) {
-      const searchableText = [
-        task.actionDescription || "",
-        task.ticketFor || "",
-        task.actionOwnerName || "",
-        task.reviewerName || "",
-        task.status || "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      if (!searchableText.includes(search)) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  console.log("Selected Owner:", owner);
-  console.log("Filtered Count:", filtered.length);
-
-  taskList_renderTasks(filtered);
 }
 
 function taskList_applyFilters() {
