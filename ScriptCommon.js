@@ -2766,3 +2766,41 @@ function CONVERT_ROWS_TO_OBJECTS(data) {
       Object.fromEntries(row.map((value, index) => [keys[index], value])),
     );
 }
+
+/**
+ * Creates a key-value map from a 2D array (header row is skipped).
+ * @param {Array} data - Sheet data.
+ * @param {number} keyIndex - Column index to use as the key.
+ * @param {number|number[]} valueIndexes - Single column index or array of indexes for the value(s).
+ * @param {Function} [filterFn] - Optional filter. Return true to include the row.
+ * @param {Function} [SortFn] - Optional Sort fun used to sort data.
+ * Examples:
+ * CREATE_MAP(data, 6, 7);
+ * CREATE_MAP(data, 6, [7, 8]);
+ * CREATE_MAP(data, 6, 7, row => row[5] === "Y");
+ */
+function CREATE_MAP(data, keyIndex, valueIndexes, filterFn, sortFn) {
+  const map = {};
+  const isArray = Array.isArray(valueIndexes);
+
+  // Header skip
+  let rows = data.slice(1);
+
+  // Optional filter
+  if (filterFn) {
+    rows = rows.filter(filterFn);
+  }
+
+  // Optional sort
+  if (sortFn) {
+    rows.sort(sortFn);
+  }
+
+  for (const row of rows) {
+    map[row[keyIndex]] = isArray
+      ? valueIndexes.map((index) => row[index])
+      : row[valueIndexes];
+  }
+
+  return map;
+}
