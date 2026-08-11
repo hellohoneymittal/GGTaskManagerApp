@@ -611,7 +611,7 @@ async function showTaskListPopup() {
 
 function PrepareTaskListData() {
   taskList_data = taskList_allData
-    .filter((task) => task.ticketFor?.startsWith("ServiceApp"))
+    // .filter((task) => task.ticketFor?.startsWith("ServiceApp"))
     .map((task) => {
       const status = task.status || "Pending";
 
