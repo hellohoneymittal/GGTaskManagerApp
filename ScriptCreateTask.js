@@ -192,7 +192,7 @@ async function createTaskBtnClick() {
         button.classList.add("selected");
 
         // Populate on task selection
-        taskDescription.value = taskObj.task;
+        taskDescription.value = "";
         taskOwner.value = taskObj.owner;
 
         taskReviewer.value = taskObj.reviewer;
@@ -345,15 +345,13 @@ async function createNewTaskBtnClick() {
     }
   } else {
     if (!owner) {
-      SHOW_ERROR_POPUP(
-        "Please select a predefined task first before proceeding.",
-      );
+      SHOW_ERROR_POPUP("Please select a sub category first before proceeding.");
       return;
     }
   }
 
-  if (!description) {
-    SHOW_ERROR_POPUP("Please select or write task description");
+  if (!description || description.trim().split(/\s+/).length < 10) {
+    SHOW_ERROR_POPUP("Describe your task in at least 10 words.");
     return;
   }
 
@@ -373,8 +371,10 @@ async function createNewTaskBtnClick() {
   };
 
   const response = await CALL_API("CREATE_TASK", payload);
-  if (response) {
-    SHOW_SUCCESS_POPUP("Task Created Successfully");
+  debugger;
+  if (response?.status === "success") {
+    const taskId = response?.data;
+    SHOW_SUCCESS_POPUP(`Task Created Successfully. Task ID: ${taskId}`);
   }
 
   resetCreateTask();
@@ -405,6 +405,8 @@ function taskList_renderTasks(tasks = taskList_data) {
   taskListContainer.innerHTML = "";
 
   tasks.forEach((task) => {
+    console.log("honey");
+    console.log(task);
     let actionButtons = "";
 
     if (task.status === "In Review") {
@@ -519,11 +521,11 @@ function taskList_renderTasks(tasks = taskList_data) {
 
               <div class="taskList_detailBox">
                 <div class="taskList_detailTitle">
-                  Created On
+                  Task Id
                 </div>
 
                 <div class="taskList_detailValue">
-                  ${task.date}
+                  ${task.taskId}
                 </div>
               </div>
 
