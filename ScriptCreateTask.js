@@ -371,7 +371,7 @@ async function createNewTaskBtnClick() {
   };
 
   const response = await CALL_API("CREATE_TASK", payload);
-  debugger;
+
   if (response?.status === "success") {
     const taskId = response?.data;
     SHOW_SUCCESS_POPUP(`Task Created Successfully. Task ID: ${taskId}`);
@@ -529,8 +529,41 @@ function taskList_renderTasks(tasks = taskList_data) {
                 </div>
               </div>
 
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Action Owner Comment
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${
+                    task.remarks
+                      ? task.remarks
+                          .replace(/\r\n/g, "<br>")
+                          .replace(/\n/g, "<br>")
+                      : ""
+                  }
+                </div>
+              </div>
+
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Reviewer Comment
+                </div>
+
+                <div class="taskList_detailValue">
+                 ${
+                   task.reviewerComment
+                     ? task.reviewerComment
+                         .replace(/\r\n/g, "<br>")
+                         .replace(/\n/g, "<br>")
+                     : ""
+                 }
+                </div>
+              </div>
+
             </div>
 
+            
             <div>
               <label class="taskList_commentLabel">
                 Comment <span style="color:red">*</span>
