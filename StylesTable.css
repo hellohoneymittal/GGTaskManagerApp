@@ -132,35 +132,6 @@
   text-align: left !important;
 }
 
-/*Specific to this table format*/
-/* Status */
-.my-Task-table-container table th:nth-child(1),
-.my-Task-table-container table td:nth-child(1) {
-  width: 80px !important;
-  min-width: 80px !important;
-}
-
-/* Date */
-.my-Task-table-container table th:nth-child(2),
-.my-Task-table-container table td:nth-child(2) {
-  width: 100px !important;
-  min-width: 100px !important;
-}
-
-/* Action Description */
-.my-Task-table-container table th:nth-child(3),
-.my-Task-table-container table td:nth-child(3) {
-  width: 50% !important;
-  min-width: 300px !important;
-}
-
-/* Comment */
-.my-Task-table-container table th:nth-child(4),
-.my-Task-table-container table td:nth-child(4) {
-  width: 40% !important;
-  min-width: 250px !important;
-}
-
 /*new css added for table */
 .dynamic-table-search-container {
   width: 100%;
@@ -256,4 +227,33 @@
   position: sticky;
   top: 0;
   z-index: 1; /* Ensure the header stays on top of the table rows */
+}
+
+/*Specific to this table format*/
+/* Status */
+.my-Task-table-container table th:nth-child(1),
+.my-Task-table-container table td:nth-child(1) {
+  width: 80px !important;
+  min-width: 80px !important;
+}
+
+/* Date */
+.my-Task-table-container table th:nth-child(2),
+.my-Task-table-container table td:nth-child(2) {
+  width: 100px !important;
+  min-width: 100px !important;
+}
+
+/* Action Description */
+.my-Task-table-container table th:nth-child(3),
+.my-Task-table-container table td:nth-child(3) {
+  width: 250px !important;
+  min-width: 250px !important;
+}
+
+/* Comment */
+.my-Task-table-container table th:nth-child(4),
+.my-Task-table-container table td:nth-child(4) {
+  width: 200px !important;
+  min-width: 200px !important;
 }
