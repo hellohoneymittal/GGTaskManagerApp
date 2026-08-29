@@ -833,3 +833,60 @@ async function taskList_updateStatus(taskId, newStatus) {
     taskList_applyFilters();
   }
 }
+
+async function myTaskButtonClick() {
+  const response = await CALL_API("GET_ALL_TASK_SHEET_DATA", {});
+  const filterData = getFilteredActions(response?.data, selectedUser?.filterBy);
+
+  fillDynamicTableRows(filterData, "fmTableTHead", "fmTableTBody", [], {
+    enableSearch: true,
+    enableSorting: true,
+    searchPlaceholder: "Search task...",
+    isFileNameThere: false,
+    isFileURLThere: false,
+    enableRowCount: true,
+  });
+
+  SHOW_SPECIFIC_DIV("myTaskContainer");
+}
+
+function getFilteredActions(actionsData, loginPerson) {
+  const result = [["Status", "Date", "Action Description", "Comment"]];
+
+  const pendingActions = actionsData["Pending Actions"] || [];
+
+  pendingActions.slice(1).forEach((row) => {
+    // 10th column = J = Created By
+    const createdByValue = String(row[9] || "");
+
+    if (createdByValue.includes(String(loginPerson))) {
+      result.push([
+        row[0], // Status
+        row[3], // Date
+        row[4], // Action Description
+        row[1], // Comment / Remarks
+      ]);
+    }
+  });
+
+  const closedActions = actionsData["Closed Actions"] || [];
+
+  closedActions.slice(1).forEach((row) => {
+    const createdByValue = String(row[9] || "");
+
+    if (createdByValue.includes(String(loginPerson))) {
+      result.push([
+        "Closed", // Status
+        row[0], // Date
+        row[2], // Action Description
+        row[6], // Closure Remarks
+      ]);
+    }
+  });
+
+  return result;
+}
+
+function backToMainMenu() {
+  SHOW_SPECIFIC_DIV("menuPopup");
+}

@@ -577,7 +577,7 @@ textarea {
 }
 
 .collection-table-container::-webkit-scrollbar-thumb {
-  background-color: #66bb6a; /* Color of the scrollbar handle */
+  background-color: #52609a; /* Color of the scrollbar handle */
   border-radius: 10px;
   border: 2px solid #f1f8e9; /* Adds some space around the thumb */
 }
@@ -602,7 +602,7 @@ textarea {
 }
 
 .collection-table-container::-webkit-scrollbar-thumb-horizontal {
-  background-color: #66bb6a;
+  background-color: #52609a;
   border-radius: 10px;
   border: 2px solid #f1f8e9;
 }
@@ -738,7 +738,7 @@ table {
 }
 
 thead {
-  background-color: #66bb6a;
+  background-color: #52609a;
   color: #fff;
 }
 

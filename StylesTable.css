@@ -1,0 +1,259 @@
+.collection-table-h2 {
+  margin-top: 20px !important;
+  margin-bottom: 0px !important;
+}
+
+.collection-table-container {
+  overflow: auto;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Webkit Scrollbar (Chrome, Safari, Edge) */
+.collection-table-container::-webkit-scrollbar {
+  width: 10px; /* Width of the scrollbar */
+  height: 10px; /* Height for horizontal scrollbar */
+}
+
+.collection-table-container::-webkit-scrollbar-track {
+  background: #f1f8e9; /* Background of the scrollbar track */
+  border-radius: 10px;
+}
+
+.collection-table-container::-webkit-scrollbar-thumb {
+  background-color: #52609a; /* Color of the scrollbar handle */
+  border-radius: 10px;
+  border: 2px solid #f1f8e9; /* Adds some space around the thumb */
+}
+
+.collection-table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #52609a; /* Darker color on hover */
+}
+
+/* Firefox Scrollbar */
+.collection-table-container {
+  scrollbar-color: #52609a #f1f8e9; /* Thumb and track colors */
+}
+
+/* Optional: Style for horizontal scrollbar if needed */
+.collection-table-container::-webkit-scrollbar-horizontal {
+  height: 8px;
+}
+
+/* Customize track and thumb for horizontal scrollbar */
+.collection-table-container::-webkit-scrollbar-track-horizontal {
+  background: #f1f8e9;
+}
+
+.collection-table-container::-webkit-scrollbar-thumb-horizontal {
+  background-color: #52609a;
+  border-radius: 10px;
+  border: 2px solid #f1f8e9;
+}
+
+.collection-table-SearchContainer {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.collection-table-SearchContainer select {
+  position: relative;
+  z-index: 1;
+}
+
+.popup .collection-table-SearchInput {
+  margin-bottom: 1px !important;
+}
+
+.popup .collection-table-SearchClearBtn {
+  width: 10% !important;
+  position: absolute !important;
+  right: -5px !important;
+  top: 44% !important;
+  transform: translateY(-50%) !important;
+  cursor: pointer !important;
+  font-size: 20px !important;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  display: none;
+  color: red !important;
+  z-index: 9999 !important;
+}
+
+.popup .collection-table-SearchClearBtn:hover {
+  color: #333 !important;
+}
+
+.table-action-cell {
+  display: flex;
+  gap: 20px;
+  padding: 5px;
+}
+
+.table-action-btn img {
+  max-width: 100% !important;
+}
+
+.collection-table-RowCount {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #52609a;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+.table-action-btn:disabled img {
+  opacity: 0.5;
+}
+
+.collection-table-container table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.collection-table-container table th,
+.collection-table-container table td {
+  white-space: pre-wrap !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  vertical-align: top !important;
+  line-height: 1.4 !important;
+  padding: 8px 10px !important;
+  text-align: left !important;
+}
+
+/*Specific to this table format*/
+/* Status */
+.my-Task-table-container table th:nth-child(1),
+.my-Task-table-container table td:nth-child(1) {
+  width: 80px !important;
+  min-width: 80px !important;
+}
+
+/* Date */
+.my-Task-table-container table th:nth-child(2),
+.my-Task-table-container table td:nth-child(2) {
+  width: 100px !important;
+  min-width: 100px !important;
+}
+
+/* Action Description */
+.my-Task-table-container table th:nth-child(3),
+.my-Task-table-container table td:nth-child(3) {
+  width: 50% !important;
+  min-width: 300px !important;
+}
+
+/* Comment */
+.my-Task-table-container table th:nth-child(4),
+.my-Task-table-container table td:nth-child(4) {
+  width: 40% !important;
+  min-width: 250px !important;
+}
+
+/*new css added for table */
+.dynamic-table-search-container {
+  width: 100%;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dynamic-table-search-input {
+  width: 280px;
+  padding: 9px 12px;
+
+  border: 1px solid #ddd;
+  border-radius: 6px;
+
+  outline: none;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.dynamic-table-search-input:focus {
+  border-color: #52609a;
+  box-shadow: 0 0 0 2px rgba(82, 96, 154, 0.12);
+}
+
+/* =================================
+   SORTABLE HEADER
+================================= */
+
+#fmTable thead th.sortable-table-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+#fmTable thead th.sortable-table-header:hover {
+  background-color: #465284;
+}
+
+/* =================================
+   SORT INDICATORS
+================================= */
+
+#fmTable thead th.sort-asc::after {
+  content: " ▲";
+  font-size: 10px;
+}
+
+#fmTable thead th.sort-desc::after {
+  content: " ▼";
+  font-size: 10px;
+}
+
+/* =================================
+   ACTION HEADER
+================================= */
+
+.table-action-header {
+  text-align: center !important;
+}
+
+/* =================================
+   ACTION BUTTON
+================================= */
+
+.table-action-btn {
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+
+  padding: 4px;
+  margin: 0 3px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 0.15s ease;
+}
+
+.table-action-btn:hover {
+  transform: scale(1.08);
+}
+
+.table-action-btn img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+/*End css for table*/
+
+.table-header {
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensure the header stays on top of the table rows */
+}
