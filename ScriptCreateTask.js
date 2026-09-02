@@ -350,8 +350,8 @@ async function createNewTaskBtnClick() {
     }
   }
 
-  if (!description || description.trim().split(/\s+/).length < 10) {
-    SHOW_ERROR_POPUP("Describe your task in at least 10 words.");
+  if (!description || description.trim().split(/\s+/).length < 5) {
+    SHOW_ERROR_POPUP("Describe your task in at least 5 words.");
     return;
   }
 
