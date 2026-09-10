@@ -339,6 +339,7 @@ body {
   .password-popup-content,
   .scale-popup-content {
     padding: 10px;
+    max-width: 92%;
   }
 
   .popup-content h2,
