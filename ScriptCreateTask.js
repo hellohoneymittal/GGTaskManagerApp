@@ -33,19 +33,29 @@ function convertRowsToTaskMaster(data) {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
 
-    const serviceType = row[1];
-    const task = row[2];
-    const owner = row[3];
-    const reviewer = row[4];
-    const dueDays = Number(row[5]) || "";
+    const departmentType = row[1];
+    const serviceType = row[2];
+    const task = row[3];
+    const owner = row[4];
+    const reviewer = row[5];
+    const dueDays = Number(row[6]) || "";
 
-    if (!result[serviceType]) {
-      result[serviceType] = {
+    // Department level
+    if (!result[departmentType]) {
+      result[departmentType] = {
+        services: {},
+      };
+    }
+
+    // Service Type level
+    if (!result[departmentType].services[serviceType]) {
+      result[departmentType].services[serviceType] = {
         tasks: [],
       };
     }
 
-    result[serviceType].tasks.push({
+    // Task level
+    result[departmentType].services[serviceType].tasks.push({
       task,
       owner,
       reviewer,
@@ -135,8 +145,49 @@ function applyTaskSectionVisibility(category) {
 async function createTaskBtnClick() {
   resetCreateTask();
   applyTaskSectionVisibility("");
-  const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {}, 24);
+  const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {});
+  populateCreateTaskData(response);
+}
+
+async function callCreateBtnAPI() {
+  resetCreateTask();
+  applyTaskSectionVisibility("");
+  const response = await CALL_API_WITH_CACHE("GET_TASK_LIST", {}, null, true); // always fresh refresh
+  populateCreateTaskData(response);
+}
+
+function populateServiceTypes() {
+  const selectedDepartment = departmentSelect.value;
+
+  categorySelect.innerHTML = '<option value="">Choose Service Type</option>';
+
+  taskButtonsContainer.innerHTML = "";
+  taskDescription.value = "";
+  taskOwner.value = "";
+  taskReviewer.value = "";
+  taskDueDays = "";
+
+  applyTaskSectionVisibility("");
+
+  if (!selectedDepartment) return;
+
+  const departmentData = TASK_MASTER[selectedDepartment];
+
+  if (!departmentData?.services) return;
+
+  Object.keys(departmentData.services).forEach((serviceType) => {
+    const option = document.createElement("option");
+
+    option.value = serviceType;
+    option.textContent = serviceType;
+
+    categorySelect.appendChild(option);
+  });
+}
+
+function populateCreateTaskData(response) {
   TASK_MASTER = convertRowsToTaskMaster(response?.data?.taskMasterResponse);
+
   SF_MAP = CREATE_MAP(
     response?.data?.stdDatabaseResponse,
     6,
@@ -145,11 +196,15 @@ async function createTaskBtnClick() {
     (a, b) => a[0].localeCompare(b[0]),
   );
 
-  TASK_MASTER["Behavioural Issues"] = {
-    tasks: behaviouralTask,
-  };
+  if (TASK_MASTER["Gurukul"]?.services) {
+    TASK_MASTER["Gurukul"].services["Behavioural Issues"] = {
+      tasks: behaviouralTask,
+    };
+  }
 
   SET_DIV_TITLE("createTaskPopup", "Create Task");
+
+  const departmentSelect = document.getElementById("departmentSelect");
   const categorySelect = document.getElementById("categorySelect");
   const taskButtonsContainer = document.getElementById("taskButtonsContainer");
   const taskDescription = document.getElementById("taskDescription");
@@ -157,28 +212,56 @@ async function createTaskBtnClick() {
   const taskReviewer = document.getElementById("taskReviewer");
   const taskList = document.getElementById("taskList");
 
-  categorySelect.innerHTML = '<option value="">Choose Category</option>';
+  // Department Dropdown
+  departmentSelect.innerHTML = "";
 
-  Object.keys(TASK_MASTER).forEach((category) => {
+  const loginType = selectedUser?.loginType;
+
+  Object.keys(TASK_MASTER).forEach((department) => {
     const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categorySelect.appendChild(option);
+
+    option.value = department;
+    option.textContent = department;
+
+    departmentSelect.appendChild(option);
   });
 
+  // Gurukul default
+  if (TASK_MASTER["Gurukul"]) {
+    departmentSelect.value = "Gurukul";
+    populateServiceTypes();
+  }
+
+  // Parents -> Department fixed to Gurukul
+  if (loginType === "Parents") {
+    departmentSelect.value = "Gurukul";
+    departmentSelect.disabled = true;
+  } else {
+    departmentSelect.disabled = false;
+  }
+
+  departmentSelect.addEventListener("change", populateServiceTypes);
+
+  // Service Type Change
   categorySelect.addEventListener("change", () => {
-    const selectedCategory = categorySelect.value;
-    applyTaskSectionVisibility(selectedCategory);
+    const selectedDepartment = departmentSelect.value;
+    const selectedServiceType = categorySelect.value;
+
+    applyTaskSectionVisibility(selectedServiceType);
+
     taskButtonsContainer.innerHTML = "";
+
     taskDescription.value = "";
     taskOwner.value = "";
     taskReviewer.value = "";
+    taskDueDays = "";
 
-    if (!selectedCategory) return;
+    if (!selectedDepartment || !selectedServiceType) return;
 
-    const categoryData = TASK_MASTER[selectedCategory];
+    const serviceData =
+      TASK_MASTER[selectedDepartment].services[selectedServiceType];
 
-    categoryData.tasks.forEach((taskObj) => {
+    serviceData.tasks.forEach((taskObj) => {
       const button = document.createElement("button");
 
       button.className = "task-btn";
@@ -194,7 +277,6 @@ async function createTaskBtnClick() {
         // Populate on task selection
         taskDescription.value = "";
         taskOwner.value = taskObj.owner;
-
         taskReviewer.value = taskObj.reviewer;
         taskDueDays = taskObj.dueDays;
       });
@@ -311,6 +393,7 @@ function ctFetchFile() {
 }
 
 async function createNewTaskBtnClick() {
+  const department = document.getElementById("departmentSelect").value;
   const category = document.getElementById("categorySelect").value;
   const description = document.getElementById("taskDescription").value.trim();
 
@@ -368,6 +451,7 @@ async function createNewTaskBtnClick() {
     selectedFileType: selectedfile?.type ?? "",
     selectedFileName: selectedfile?.name ?? "",
     dueDays: taskDueDays,
+    department: department,
   };
 
   const response = await CALL_API("CREATE_TASK", payload);
