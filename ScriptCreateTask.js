@@ -480,7 +480,27 @@ function taskList_getStatusClass(status) {
     return "taskList_inreview";
   }
 
+  if (status === "Due Date Ext Req") {
+    return "taskList_extension_requested";
+  }
+
   return "taskList_progress";
+}
+
+function formatExtensionRequestedDate(value) {
+  if (!value) return "";
+
+  const dateValue = String(value).trim();
+  const dateParts = dateValue.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+
+  if (dateParts) {
+    const [, day, month, year] = dateParts;
+    return formatDate(
+      `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`,
+    );
+  }
+
+  return formatDate(dateValue.slice(0, 10));
 }
 
 function taskList_renderTasks(tasks = taskList_data) {
@@ -489,11 +509,37 @@ function taskList_renderTasks(tasks = taskList_data) {
   taskListContainer.innerHTML = "";
 
   tasks.forEach((task) => {
-    console.log("honey");
-    console.log(task);
+    debugger;
+    const extensionStatus = String(task.extStatus || "").trim();
+    const extensionStatusKey = extensionStatus.toLowerCase();
+    const canRequestExtension =
+      ["Pending", "In Progress"].includes(task.status) &&
+      task.actionOwnerName === selectedDevoteeName &&
+      extensionStatusKey !== "pending";
+    const canReviewExtension =
+      extensionStatusKey === "pending" &&
+      task.reviewerName === selectedDevoteeName;
+
     let actionButtons = "";
 
-    if (task.status === "In Review") {
+    if (task.status === "Due Date Ext Req") {
+      actionButtons = `
+        
+
+        <button
+          class="taskList_btn taskList_editBtn ${canReviewExtension ? "" : "taskList_btnDisabled"}"
+          onclick="${canReviewExtension ? `reviewExtensionRequest('${task.taskId}', 'Rejected')` : ""}"
+          ${canReviewExtension ? "" : "disabled"}>
+          Reject Extension
+        </button>
+        <button
+          class="taskList_btn taskList_closeBtn ${canReviewExtension ? "" : "taskList_btnDisabled"}"
+          onclick="${canReviewExtension ? `reviewExtensionRequest('${task.taskId}', 'Approved')` : ""}"
+          ${canReviewExtension ? "" : "disabled"}>
+          Approve Extension
+        </button>
+      `;
+    } else if (task.status === "In Review") {
       actionButtons = `
         <button
           class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
@@ -512,6 +558,13 @@ function taskList_renderTasks(tasks = taskList_data) {
     } else {
       actionButtons = `
         <button
+            class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
+            onclick="${canRequestExtension ? `openExtensionPopup('${task.taskId}')` : ""}"
+            ${canRequestExtension ? "" : "disabled"}>
+            Due Date Ext Req
+        </button>
+
+        <button
           class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
           onclick="${task.canReview ? `taskList_updateStatus('${task.taskId}', 'In Progress')` : ""}"
           ${task.canReview ? "" : "disabled"}>
@@ -523,6 +576,22 @@ function taskList_renderTasks(tasks = taskList_data) {
           onclick="${task.canReview ? `taskList_updateStatus('${task.taskId}', 'In Review')` : ""}"
           ${task.canReview ? "" : "disabled"}>
           In Review
+        </button>
+      `;
+    }
+
+    if (canReviewExtension && task.status !== "Due Date Ext Req") {
+      actionButtons += `
+        <button
+          class="taskList_btn taskList_closeBtn"
+          onclick="reviewExtensionRequest('${task.taskId}', 'Approved')">
+          Approve Extension
+        </button>
+
+        <button
+          class="taskList_btn taskList_editBtn"
+          onclick="reviewExtensionRequest('${task.taskId}', 'Rejected')">
+          Reject Extension
         </button>
       `;
     }
@@ -645,6 +714,36 @@ function taskList_renderTasks(tasks = taskList_data) {
                 </div>
               </div>
 
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Extension Status
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${extensionStatus || "Not Requested"}
+                </div>
+              </div>
+
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Requested Due Date
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${formatExtensionRequestedDate(task.extRequestDate)}
+                </div>
+              </div>
+
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Extension Reason
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${(task.extReason || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>")}
+                </div>
+              </div>
+
             </div>
 
             
@@ -740,7 +839,10 @@ function PrepareTaskListData() {
         canReview:
           ((status === "Pending" || status === "In Progress") &&
             task.actionOwnerName === selectedDevoteeName) ||
-          (status === "In Review" && task.reviewerName === selectedDevoteeName),
+          (status === "In Review" &&
+            task.reviewerName === selectedDevoteeName) ||
+          (status === "Due Date Ext Req" &&
+            task.reviewerName === selectedDevoteeName),
       };
     });
 }
@@ -824,10 +926,9 @@ function taskList_applyFilters() {
 
     // Owner Filter
     if (owner !== "All") {
-      const taskOwner =
-        task.status === "In Review"
-          ? task.reviewerName || ""
-          : task.actionOwnerName || "";
+      const taskOwner = ["In Review", "Due Date Ext Req"].includes(task.status)
+        ? task.reviewerName || ""
+        : task.actionOwnerName || "";
 
       if (taskOwner !== owner) {
         return false;
@@ -974,3 +1075,265 @@ function getFilteredActions(actionsData, loginPerson) {
 function backToMainMenu() {
   SHOW_SPECIFIC_DIV("menuPopup");
 }
+
+// Current task information
+
+let extensionTask = null;
+
+function getTaskDueDate(task) {
+  const creationDate = task?.date ?? task?.createdDate ?? task?.creationDate;
+  const dueDaysValue = task?.dueDays;
+  const dueDays = Number(dueDaysValue);
+
+  if (
+    creationDate &&
+    dueDaysValue !== "" &&
+    dueDaysValue !== null &&
+    dueDaysValue !== undefined &&
+    Number.isFinite(dueDays)
+  ) {
+    const dateParts = String(creationDate).match(
+      /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/,
+    );
+
+    if (dateParts) {
+      const [, day, month, year] = dateParts;
+      const baseDate = new Date(
+        Date.UTC(Number(year), Number(month) - 1, Number(day)),
+      );
+
+      const isValidBaseDate =
+        baseDate.getUTCFullYear() === Number(year) &&
+        baseDate.getUTCMonth() === Number(month) - 1 &&
+        baseDate.getUTCDate() === Number(day);
+
+      if (!isValidBaseDate) return "";
+
+      const dueDate = new Date(
+        Date.UTC(Number(year), Number(month) - 1, Number(day) + dueDays),
+      );
+
+      return dueDate.toISOString().slice(0, 10);
+    }
+  }
+
+  const dueDate =
+    task?.dueDate ??
+    task?.actionDueDate ??
+    task?.taskDueDate ??
+    task?.deadline ??
+    task?.previousDueDate;
+
+  if (!dueDate) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate))) {
+    return String(dueDate);
+  }
+
+  const parsedDate = PARSE_IST_DATE(dueDate);
+  if (!parsedDate || Number.isNaN(parsedDate.getTime())) return "";
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Open Popup
+
+function openExtensionPopup(taskId) {
+  const task = taskList_data.find(
+    (item) => String(item.taskId) === String(taskId),
+  );
+
+  if (!task) {
+    SHOW_ERROR_POPUP("Task not found.");
+    return;
+  }
+
+  const previousDueDate = getTaskDueDate(task);
+  if (!previousDueDate) {
+    SHOW_ERROR_POPUP("This task does not contain a valid due date.");
+    return;
+  }
+
+  extensionTask = {
+    taskId: task.taskId,
+    taskName: task.actionDescription || task.taskName || "",
+    department: task.department || task.departmentType || "",
+    category: task.ticketFor || task.category || "",
+    previousDueDate,
+  };
+
+  SHOW_SPECIFIC_DIV("extensionPopup");
+
+  // Populate task information
+  document.getElementById("extensionTaskName").textContent =
+    extensionTask.taskName;
+
+  document.getElementById("extensionDepartment").textContent =
+    extensionTask.department;
+
+  document.getElementById("extensionCategory").textContent =
+    extensionTask.category;
+
+  // Format previous date
+  document.getElementById("previousDueDate").textContent = formatDate(
+    extensionTask.previousDueDate,
+  );
+
+  // Reset fields
+  document.getElementById("newDueDate").value = "";
+  document.getElementById("extensionReason").value = "";
+  document.getElementById("dateError").textContent = "";
+
+  const today = new Date();
+  const todayDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  const nextDayAfterPreviousDueDate = new Date(
+    `${extensionTask.previousDueDate}T00:00:00Z`,
+  );
+  nextDayAfterPreviousDueDate.setUTCDate(
+    nextDayAfterPreviousDueDate.getUTCDate() + 1,
+  );
+
+  const earliestAllowedDate = nextDayAfterPreviousDueDate
+    .toISOString()
+    .slice(0, 10);
+
+  document.getElementById("newDueDate").min =
+    earliestAllowedDate > todayDate ? earliestAllowedDate : todayDate;
+}
+
+// Close Popup
+
+function closeExtensionPopup() {
+  SHOW_SPECIFIC_DIV("taskListPopup");
+}
+
+// Request Extension
+
+async function requestExtension() {
+  if (!extensionTask) {
+    SHOW_ERROR_POPUP("Please select a task first.");
+    return;
+  }
+
+  const newDate = document.getElementById("newDueDate").value;
+
+  const reason = document.getElementById("extensionReason").value.trim();
+
+  const error = document.getElementById("dateError");
+
+  // Validate date
+  if (!newDate) {
+    error.textContent = "Please select a new due date.";
+
+    return;
+  }
+
+  // New date should be greater than previous date
+  if (newDate <= extensionTask.previousDueDate) {
+    error.textContent = "New due date must be after the previous due date.";
+
+    return;
+  }
+
+  error.textContent = "";
+
+  // Data that you can send to backend
+  const requestData = {
+    taskId: extensionTask.taskId,
+    extStatus: "Pending",
+    extReqDueDate: newDate,
+    extReason: reason,
+    requestedBy: selectedDevoteeName,
+  };
+
+  const response = await CALL_API("REQUEST_DUE_DATE_EXTENSION", requestData);
+
+  if (!response?.status) return;
+
+  const task = taskList_data.find(
+    (item) => String(item.taskId) === String(extensionTask.taskId),
+  );
+
+  if (task) {
+    task.status = "Due Date Ext Req";
+    task.extStatus = "Pending";
+    task.extReqDueDate = newDate;
+    task.extReason = reason;
+  }
+
+  closeExtensionPopup();
+  SHOW_SUCCESS_POPUP("Due date extension request submitted successfully.");
+}
+
+async function reviewExtensionRequest(taskId, decision) {
+  const task = taskList_data.find(
+    (item) => String(item.taskId) === String(taskId),
+  );
+
+  if (!task) {
+    SHOW_ERROR_POPUP("Task not found.");
+    return;
+  }
+
+  if (
+    String(task.extStatus || "")
+      .trim()
+      .toLowerCase() !== "pending" ||
+    task.reviewerName !== selectedDevoteeName
+  ) {
+    SHOW_ERROR_POPUP("You are not allowed to review this extension request.");
+    return;
+  }
+
+  const response = await CALL_API(API_TYPE_CONSTANT.REVIEW_DUE_DATE_EXTENSION, {
+    taskId: task.taskId,
+    extStatus: decision,
+    reviewedBy: selectedDevoteeName,
+    requestedDueDate: task.extReqDueDate,
+  });
+
+  if (!response?.status) return;
+
+  task.status = "Pending";
+  task.extStatus = decision;
+  taskList_applyFilters();
+  SHOW_SUCCESS_POPUP(`Extension request ${decision.toLowerCase()}.`);
+}
+
+// Date Formatting
+
+function formatDate(dateString) {
+  const date = new Date(dateString + "T00:00:00");
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// Close when clicking outside modal
+
+document
+  .getElementById("extensionPopup")
+  .addEventListener("click", function (event) {
+    if (event.target === this) {
+      closeExtensionPopup();
+    }
+  });
+
+// ESC key closes popup
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") {
+    closeExtensionPopup();
+  }
+});

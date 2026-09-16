@@ -61,3 +61,330 @@
   font-size: 18px;
   text-align: left !important;
 }
+
+/*aasdfajskdfjalksdjflkasjdlkfasdf*/
+
+/* ==============================
+   Due Date Extension Button
+================================ */
+
+.extension-btn {
+  width: 100%;
+  padding: 11px 15px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #5a64a3;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.extension-btn:hover {
+  background: #4d5795;
+}
+
+/* ==============================
+   Modal Overlay
+================================ */
+
+.modal-overlay {
+  display: none;
+
+  position: fixed;
+  inset: 0;
+
+  z-index: 9999;
+
+  background: rgba(0, 0, 0, 0.55);
+
+  backdrop-filter: blur(3px);
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+}
+
+/* ==============================
+   Modal
+================================ */
+
+.extension-modal {
+  width: 100%;
+  max-width: 560px;
+
+  background: #f8d8ad;
+
+  border-radius: 14px;
+
+  padding: 14px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+  animation: popupAnimation 0.2s ease-out;
+}
+
+@keyframes popupAnimation {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==============================
+   Header
+================================ */
+
+.modal-header {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+
+  background: #5964a3;
+
+  color: white;
+
+  padding: 14px 45px 14px 15px;
+
+  border-radius: 7px;
+
+  font-size: 17px;
+  font-weight: 700;
+
+  text-align: left;
+}
+
+.popup-content .close-btn {
+  position: absolute;
+
+  right: 8px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 32px !important;
+  min-width: 32px;
+  height: 32px;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: white;
+
+  font-size: 25px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.popup-content .close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ==============================
+   Task Details
+================================ */
+
+.task-details {
+  background: #fff7ee;
+
+  border: 1px solid #e1cdb5;
+
+  border-radius: 9px;
+
+  padding: 15px;
+
+  margin-top: 14px;
+}
+
+.detail-row {
+  text-align: left !important;
+  display: grid;
+
+  grid-template-columns: 150px 1fr;
+
+  gap: 10px;
+
+  padding: 6px 0;
+
+  font-size: 14px;
+}
+
+.detail-label {
+  align-items: left !important;
+  font-weight: 700;
+  color: #333;
+}
+
+/* ==============================
+   Form
+================================ */
+
+.form-group {
+  margin-top: 15px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #222;
+}
+
+.optional {
+  font-weight: 400;
+  font-size: 12px;
+
+  color: #777;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #c8c8c8;
+
+  border-radius: 7px;
+
+  background: #fff8f1;
+
+  padding: 11px;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #5964a3;
+
+  box-shadow: 0 0 0 2px rgba(89, 100, 163, 0.15);
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+/* ==============================
+   Error
+================================ */
+
+.error-message {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #e53935;
+
+  font-size: 12px;
+
+  min-height: 15px;
+}
+
+/* ==============================
+   Buttons
+================================ */
+
+.modal-actions {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 9px;
+
+  margin-top: 18px;
+}
+
+.modal-actions button {
+  border: none;
+
+  border-radius: 7px;
+
+  padding: 12px;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.cancel-btn {
+  background: #f44336;
+}
+
+.cancel-btn:hover {
+  background: #df3028;
+}
+
+.request-btn {
+  background: #49a54f;
+}
+
+.request-btn:hover {
+  background: #3d9143;
+}
+
+/* ==============================
+   Mobile
+================================ */
+
+@media (max-width: 600px) {
+  .extension-modal {
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  .modal-header {
+    font-size: 15px;
+  }
+
+  .detail-row {
+    grid-template-columns: 125px 1fr;
+    font-size: 13px;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
