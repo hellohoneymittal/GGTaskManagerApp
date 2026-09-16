@@ -1144,7 +1144,7 @@ async function CALL_API(apiType, data) {
       inputData: data,
     };
     try {
-      const response = await API_HANDLER_AXIOS(request);
+      const response = await API_HANDLER(request);
       if (response) {
         return response;
         //
