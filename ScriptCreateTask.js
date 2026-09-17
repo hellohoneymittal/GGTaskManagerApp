@@ -420,6 +420,7 @@ async function createNewTaskBtnClick() {
       SHOW_ERROR_POPUP("Please select student");
       return;
     }
+
     if (!behaviouralOwner) {
       SHOW_ERROR_POPUP(
         "Please select a predefined behavioural task first before proceeding.",
@@ -438,6 +439,17 @@ async function createNewTaskBtnClick() {
     return;
   }
 
+  // Calculate Due Date
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + Number(taskDueDays));
+
+  const taskDueDate =
+    String(dueDate.getDate()).padStart(2, "0") +
+    "/" +
+    String(dueDate.getMonth() + 1).padStart(2, "0") +
+    "/" +
+    dueDate.getFullYear();
+
   const selectedBtn = document.querySelector(".task-btn.selected");
 
   const payload = {
@@ -451,6 +463,7 @@ async function createNewTaskBtnClick() {
     selectedFileType: selectedfile?.type ?? "",
     selectedFileName: selectedfile?.name ?? "",
     dueDays: taskDueDays,
+    dueDate: taskDueDate,
     department: department,
   };
 
@@ -558,7 +571,7 @@ function taskList_renderTasks(tasks = taskList_data) {
     } else {
       actionButtons = `
         <button
-            class="taskList_btn taskList_editBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
+            class="taskList_btn taskList_viewBtn ${task.canReview ? "" : "taskList_btnDisabled"}"
             onclick="${canRequestExtension ? `openExtensionPopup('${task.taskId}')` : ""}"
             ${canRequestExtension ? "" : "disabled"}>
             Due Date Ext Req
@@ -714,6 +727,27 @@ function taskList_renderTasks(tasks = taskList_data) {
                 </div>
               </div>
 
+
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Due Date 
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${formatExtensionRequestedDate(task.dueDate)}
+                </div>
+              </div>
+
+              <div class="taskList_detailBox">
+                <div class="taskList_detailTitle">
+                  Ext Req Due Date
+                </div>
+
+                <div class="taskList_detailValue">
+                  ${formatExtensionRequestedDate(task.extReqDueDate)}
+                </div>
+              </div>
+
               <div class="taskList_detailBox">
                 <div class="taskList_detailTitle">
                   Extension Status
@@ -726,16 +760,6 @@ function taskList_renderTasks(tasks = taskList_data) {
 
               <div class="taskList_detailBox">
                 <div class="taskList_detailTitle">
-                  Requested Due Date
-                </div>
-
-                <div class="taskList_detailValue">
-                  ${formatExtensionRequestedDate(task.extRequestDate)}
-                </div>
-              </div>
-
-              <div class="taskList_detailBox">
-                <div class="taskList_detailTitle">
                   Extension Reason
                 </div>
 
@@ -743,6 +767,8 @@ function taskList_renderTasks(tasks = taskList_data) {
                   ${(task.extReason || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>")}
                 </div>
               </div>
+
+
 
             </div>
 
@@ -1081,67 +1107,23 @@ function backToMainMenu() {
 let extensionTask = null;
 
 function getTaskDueDate(task) {
-  const creationDate = task?.date ?? task?.createdDate ?? task?.creationDate;
-  const dueDaysValue = task?.dueDays;
-  const dueDays = Number(dueDaysValue);
-
-  if (
-    creationDate &&
-    dueDaysValue !== "" &&
-    dueDaysValue !== null &&
-    dueDaysValue !== undefined &&
-    Number.isFinite(dueDays)
-  ) {
-    const dateParts = String(creationDate).match(
-      /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/,
-    );
-
-    if (dateParts) {
-      const [, day, month, year] = dateParts;
-      const baseDate = new Date(
-        Date.UTC(Number(year), Number(month) - 1, Number(day)),
-      );
-
-      const isValidBaseDate =
-        baseDate.getUTCFullYear() === Number(year) &&
-        baseDate.getUTCMonth() === Number(month) - 1 &&
-        baseDate.getUTCDate() === Number(day);
-
-      if (!isValidBaseDate) return "";
-
-      const dueDate = new Date(
-        Date.UTC(Number(year), Number(month) - 1, Number(day) + dueDays),
-      );
-
-      return dueDate.toISOString().slice(0, 10);
-    }
-  }
-
-  const dueDate =
-    task?.dueDate ??
-    task?.actionDueDate ??
-    task?.taskDueDate ??
-    task?.deadline ??
-    task?.previousDueDate;
+  const dueDate = String(task?.dueDate || "").trim();
 
   if (!dueDate) return "";
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate))) {
-    return String(dueDate);
-  }
+  const dateParts = dueDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
 
-  const parsedDate = PARSE_IST_DATE(dueDate);
-  if (!parsedDate || Number.isNaN(parsedDate.getTime())) return "";
+  if (!dateParts) return "";
 
-  const year = parsedDate.getFullYear();
-  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-  const day = String(parsedDate.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const [, day, month, year] = dateParts;
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 // Open Popup
 
 function openExtensionPopup(taskId) {
+  debugger;
   const task = taskList_data.find(
     (item) => String(item.taskId) === String(taskId),
   );
