@@ -1183,6 +1183,7 @@ async function CALL_API_WITH_CACHE(
   inputData = {},
   cacheHours = null,
   forceRefresh = false,
+  isWriteOperation = false,
 ) {
   if (!forceRefresh) {
     const cachedResponse = await DB_GET(
@@ -1199,16 +1200,82 @@ async function CALL_API_WITH_CACHE(
 
   console.log(`Cache Miss : ${apiType}`);
 
-  const response = await CALL_API(apiType, inputData);
+  let response;
 
-  if (response) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    console.log(`API Attempt ${attempt}/3 : ${apiType}`);
+
+    response = await CALL_API(apiType, inputData);
+
+    if (response) {
+      console.log(`API Success on Attempt ${attempt} : ${apiType}`);
+      break;
+    }
+
+    if (isWriteOperation) {
+      console.log(`Write API failed. No retry : ${apiType}`);
+      break;
+    }
+
+    if (attempt < 3) {
+      console.log(`API failed. Retrying... : ${apiType}`);
+    }
+  }
+
+  if (response && !isWriteOperation) {
     await DB_SET(
-      apiType, // cache key = apiType
+      apiType,
       response,
       INDEX_DB.dbName,
       INDEX_DB.storeName,
       cacheHours,
     );
+  }
+
+  return response;
+}
+
+async function CALL_API_READ(apiType, inputData = {}) {
+  let response;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    console.log(`API READ Attempt ${attempt}/3 : ${apiType}`);
+
+    response = await CALL_API(apiType, inputData);
+
+    if (response) {
+      console.log(`API READ Success on Attempt ${attempt} : ${apiType}`);
+      break;
+    }
+
+    if (attempt < 3) {
+      console.log(`API READ failed. Retrying... : ${apiType}`);
+    }
+  }
+
+  return response;
+}
+
+let currentWriteRequestId = null;
+function GENERATE_IDEMPOTENCY_KEY() {
+  return crypto.randomUUID();
+}
+
+async function CALL_API_WRITE(apiType, inputData = {}) {
+  if (!currentWriteRequestId) {
+    currentWriteRequestId = GENERATE_IDEMPOTENCY_KEY();
+  }
+
+  const writeData = {
+    ...inputData,
+    idempotencyKey: currentWriteRequestId,
+  };
+
+  const response = await CALL_API(apiType, writeData);
+
+  // Request successfully completed
+  if (response?.status === true || response?.status === "success") {
+    currentWriteRequestId = null;
   }
 
   return response;
@@ -2683,6 +2750,7 @@ function CONVERT_ROWS_TO_OBJECTS(data) {
  * CREATE_MAP(data, 6, 7);
  * CREATE_MAP(data, 6, [7, 8]);
  * CREATE_MAP(data, 6, 7, row => row[5] === "Y");
+ * CREATE_MAP(data, 6, 7, row => row[5] === "Y",(a, b) => a[0].localeCompare(b[0]));
  */
 function CREATE_MAP(data, keyIndex, valueIndexes, filterFn, sortFn) {
   const map = {};

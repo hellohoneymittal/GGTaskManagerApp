@@ -26,44 +26,68 @@ let selectedFile64String = "";
 let selectedfile = "";
 let selectedFileType = "";
 let selectedFileName = "";
+let selectedTaskObj = null;
 
-function convertRowsToTaskMaster(data) {
-  const result = {};
+function convertRowsToTaskMaster(data, loginType) {
+  try {
+    const result = {};
 
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
 
-    const departmentType = row[1];
-    const serviceType = row[2];
-    const task = row[3];
-    const owner = row[4];
-    const reviewer = row[5];
-    const dueDays = Number(row[6]) || "";
+      const departmentType = row[1];
+      const serviceType = row[2];
 
-    // Department level
-    if (!result[departmentType]) {
-      result[departmentType] = {
-        services: {},
+      const taskObj = {
+        task: row[3],
+        owner: row[4],
+        reviewer: row[5],
+        dueDays: Number(row[6]) || "",
+        whatsappGroup: row[7] || "",
+        isVisiableFor: row[8] || "",
       };
+
+      // Visibility check
+      if (!isTaskVisibleForLoginType(taskObj, loginType)) {
+        continue;
+      }
+
+      // Department
+      if (!result[departmentType]) {
+        result[departmentType] = {
+          services: {},
+        };
+      }
+
+      // Service
+      if (!result[departmentType].services[serviceType]) {
+        result[departmentType].services[serviceType] = {
+          tasks: [],
+        };
+      }
+
+      // Task
+      result[departmentType].services[serviceType].tasks.push(taskObj);
     }
 
-    // Service Type level
-    if (!result[departmentType].services[serviceType]) {
-      result[departmentType].services[serviceType] = {
-        tasks: [],
-      };
-    }
+    return result;
+  } catch (error) {
+    SHOW_ERROR_POPUP(error.message);
+  }
+}
 
-    // Task level
-    result[departmentType].services[serviceType].tasks.push({
-      task,
-      owner,
-      reviewer,
-      dueDays,
-    });
+function isTaskVisibleForLoginType(taskObj, loginType) {
+  const visibleFor = (taskObj.isVisiableFor || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  // Blank = everyone
+  if (visibleFor.length === 0) {
+    return true;
   }
 
-  return result;
+  return visibleFor.includes(loginType);
 }
 
 let behaviouralTask = [
@@ -185,8 +209,14 @@ function populateServiceTypes() {
   });
 }
 
-function populateCreateTaskData(response) {
-  TASK_MASTER = convertRowsToTaskMaster(response?.data?.taskMasterResponse);
+function old_populateCreateTaskData(response) {
+  const loginType = selectedUser?.loginType;
+
+  // Build TASK_MASTER according to current login type
+  TASK_MASTER = convertRowsToTaskMaster(
+    response?.data?.taskMasterResponse,
+    loginType,
+  );
 
   SF_MAP = CREATE_MAP(
     response?.data?.stdDatabaseResponse,
@@ -196,7 +226,8 @@ function populateCreateTaskData(response) {
     (a, b) => a[0].localeCompare(b[0]),
   );
 
-  if (TASK_MASTER["Gurukul"]?.services) {
+  // Behavioural Issues is only available for Sewakarta
+  if (loginType === "Sewakarta" && TASK_MASTER["Gurukul"]?.services) {
     TASK_MASTER["Gurukul"].services["Behavioural Issues"] = {
       tasks: behaviouralTask,
     };
@@ -212,10 +243,11 @@ function populateCreateTaskData(response) {
   const taskReviewer = document.getElementById("taskReviewer");
   const taskList = document.getElementById("taskList");
 
+  // --------------------------------------------------
   // Department Dropdown
-  departmentSelect.innerHTML = "";
+  // --------------------------------------------------
 
-  const loginType = selectedUser?.loginType;
+  departmentSelect.innerHTML = "";
 
   Object.keys(TASK_MASTER).forEach((department) => {
     const option = document.createElement("option");
@@ -226,23 +258,66 @@ function populateCreateTaskData(response) {
     departmentSelect.appendChild(option);
   });
 
-  // Gurukul default
+  // --------------------------------------------------
+  // Populate Service Types
+  // --------------------------------------------------
+
+  function populateServiceTypes() {
+    categorySelect.innerHTML = "";
+
+    const selectedDepartment = departmentSelect.value;
+
+    if (!selectedDepartment) return;
+
+    const services = TASK_MASTER[selectedDepartment]?.services || {};
+
+    Object.keys(services).forEach((serviceType) => {
+      const option = document.createElement("option");
+
+      option.value = serviceType;
+      option.textContent = serviceType;
+
+      categorySelect.appendChild(option);
+    });
+
+    // Trigger service selection
+    categorySelect.dispatchEvent(new Event("change"));
+  }
+
+  // --------------------------------------------------
+  // Default Department
+  // --------------------------------------------------
+
   if (TASK_MASTER["Gurukul"]) {
     departmentSelect.value = "Gurukul";
     populateServiceTypes();
+  } else if (departmentSelect.options.length > 0) {
+    departmentSelect.selectedIndex = 0;
+    populateServiceTypes();
   }
 
-  // Parents -> Department fixed to Gurukul
-  if (loginType === "Parents") {
+  // --------------------------------------------------
+  // Parents -> Gurukul
+  // --------------------------------------------------
+
+  if (loginType === "Parents" && TASK_MASTER["Gurukul"]) {
     departmentSelect.value = "Gurukul";
-    departmentSelect.disabled = true;
+    // departmentSelect.disabled = true;
+    populateServiceTypes();
   } else {
     departmentSelect.disabled = false;
   }
 
+  // --------------------------------------------------
+  // Department Change
+  // --------------------------------------------------
+
   departmentSelect.addEventListener("change", populateServiceTypes);
 
+  // --------------------------------------------------
   // Service Type Change
+  // --------------------------------------------------
+
   categorySelect.addEventListener("change", () => {
     const selectedDepartment = departmentSelect.value;
     const selectedServiceType = categorySelect.value;
@@ -259,7 +334,9 @@ function populateCreateTaskData(response) {
     if (!selectedDepartment || !selectedServiceType) return;
 
     const serviceData =
-      TASK_MASTER[selectedDepartment].services[selectedServiceType];
+      TASK_MASTER[selectedDepartment]?.services?.[selectedServiceType];
+
+    if (!serviceData) return;
 
     serviceData.tasks.forEach((taskObj) => {
       const button = document.createElement("button");
@@ -275,6 +352,164 @@ function populateCreateTaskData(response) {
         button.classList.add("selected");
 
         // Populate on task selection
+        taskDescription.value = "";
+        taskOwner.value = taskObj.owner;
+        taskReviewer.value = taskObj.reviewer;
+        taskDueDays = taskObj.dueDays;
+      });
+
+      taskButtonsContainer.appendChild(button);
+    });
+  });
+
+  SHOW_SPECIFIC_DIV("createTaskPopup");
+}
+
+function populateCreateTaskData(response) {
+  const loginType = selectedUser?.loginType;
+
+  // Build TASK_MASTER according to current login type
+  TASK_MASTER = convertRowsToTaskMaster(
+    response?.data?.taskMasterResponse,
+    loginType,
+  );
+
+  SF_MAP = CREATE_MAP(
+    response?.data?.stdDatabaseResponse,
+    6,
+    7,
+    (row) => row[1] === "Y",
+    (a, b) => a[0].localeCompare(b[0]),
+  );
+
+  // Behavioural Issues is only available for Sewakarta
+  if (loginType === "Sewakarta" && TASK_MASTER["Gurukul"]?.services) {
+    TASK_MASTER["Gurukul"].services["Behavioural Issues"] = {
+      tasks: behaviouralTask,
+    };
+  }
+
+  SET_DIV_TITLE("createTaskPopup", "Create Task");
+
+  const departmentSelect = document.getElementById("departmentSelect");
+  const categorySelect = document.getElementById("categorySelect");
+  const taskButtonsContainer = document.getElementById("taskButtonsContainer");
+  const taskDescription = document.getElementById("taskDescription");
+  const taskOwner = document.getElementById("taskOwner");
+  const taskReviewer = document.getElementById("taskReviewer");
+
+  // Reset selected task whenever popup is populated
+  selectedTaskObj = null;
+
+  // Department Dropdown
+  departmentSelect.innerHTML = "";
+
+  Object.keys(TASK_MASTER).forEach((department) => {
+    const option = document.createElement("option");
+
+    option.value = department;
+    option.textContent = department;
+
+    departmentSelect.appendChild(option);
+  });
+
+  // Populate Service Types
+  function populateServiceTypes() {
+    categorySelect.innerHTML = "";
+
+    const selectedDepartment = departmentSelect.value;
+
+    if (!selectedDepartment) return;
+
+    const services = TASK_MASTER[selectedDepartment]?.services || {};
+
+    Object.keys(services).forEach((serviceType) => {
+      const option = document.createElement("option");
+
+      option.value = serviceType;
+      option.textContent = serviceType;
+
+      categorySelect.appendChild(option);
+    });
+
+    // Trigger service selection
+    categorySelect.dispatchEvent(new Event("change"));
+  }
+
+  // --------------------------------------------------
+  // Default Department
+  // --------------------------------------------------
+
+  if (TASK_MASTER["Gurukul"]) {
+    departmentSelect.value = "Gurukul";
+    populateServiceTypes();
+  } else if (departmentSelect.options.length > 0) {
+    departmentSelect.selectedIndex = 0;
+    populateServiceTypes();
+  }
+
+  // --------------------------------------------------
+  // Parents -> Gurukul
+  // --------------------------------------------------
+
+  if (loginType === "Parents" && TASK_MASTER["Gurukul"]) {
+    departmentSelect.value = "Gurukul";
+    // departmentSelect.disabled = true;
+    populateServiceTypes();
+  } else {
+    departmentSelect.disabled = false;
+  }
+
+  // --------------------------------------------------
+  // Department Change
+  // --------------------------------------------------
+
+  departmentSelect.addEventListener("change", populateServiceTypes);
+
+  // --------------------------------------------------
+  // Service Type Change
+  // --------------------------------------------------
+
+  categorySelect.addEventListener("change", () => {
+    const selectedDepartment = departmentSelect.value;
+    const selectedServiceType = categorySelect.value;
+
+    applyTaskSectionVisibility(selectedServiceType);
+
+    taskButtonsContainer.innerHTML = "";
+
+    taskDescription.value = "";
+    taskOwner.value = "";
+    taskReviewer.value = "";
+    taskDueDays = "";
+
+    // Clear previously selected task
+    selectedTaskObj = null;
+
+    if (!selectedDepartment || !selectedServiceType) return;
+
+    const serviceData =
+      TASK_MASTER[selectedDepartment]?.services?.[selectedServiceType];
+
+    if (!serviceData) return;
+
+    serviceData.tasks.forEach((taskObj) => {
+      const button = document.createElement("button");
+
+      button.className = "task-btn";
+      button.textContent = taskObj.task;
+
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".task-btn").forEach((btn) => {
+          btn.classList.remove("selected");
+        });
+
+        button.classList.add("selected");
+
+        // Store complete selected task object
+        selectedTaskObj = taskObj;
+
+        // Populate task details
         taskDescription.value = "";
         taskOwner.value = taskObj.owner;
         taskReviewer.value = taskObj.reviewer;
@@ -343,6 +578,7 @@ function resetCreateTask() {
   selectedfile = null;
 
   selectedFile64String = "";
+  selectedTaskObj = null;
 }
 
 function backToMainScreenFromCreateTask() {
@@ -450,11 +686,19 @@ async function createNewTaskBtnClick() {
     "/" +
     dueDate.getFullYear();
 
-  const selectedBtn = document.querySelector(".task-btn.selected");
-
+  const updatedOwner = isBehavioural ? behaviouralOwner : owner;
+  let whatsappGroup = "";
+  if (isBehavioural) {
+    whatsappGroup =
+      updatedOwner === "Disciplinary Team"
+        ? "GurukulInviligationDisciplinaryTeam"
+        : "GurukulExternal";
+  } else {
+    whatsappGroup = selectedTaskObj?.whatsappGroup || "";
+  }
   const payload = {
     category: category,
-    owner: isBehavioural ? behaviouralOwner : owner,
+    owner: updatedOwner,
     reviewer: isBehavioural ? "" : reviewer,
     description: description,
     createdBy: selectedDevoteeName,
@@ -465,11 +709,12 @@ async function createNewTaskBtnClick() {
     dueDays: taskDueDays,
     dueDate: taskDueDate,
     department: department,
+    whatsappGroup: whatsappGroup,
   };
 
   const response = await CALL_API("CREATE_TASK", payload);
 
-  if (response?.status === "success") {
+  if (response?.status) {
     const taskId = response?.data;
     SHOW_SUCCESS_POPUP(`Task Created Successfully. Task ID: ${taskId}`);
   }
