@@ -839,6 +839,7 @@ tbody tr:nth-child(even) {
   overflow-y: auto;
   z-index: 2;
   box-sizing: border-box;
+  text-align: left;
 }
 
 .popup .liveSearchUL li {
