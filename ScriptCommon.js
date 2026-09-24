@@ -1414,7 +1414,7 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
-const DB_VERSION = 14;
+const DB_VERSION = 15;
 
 function DB_OPEN_INTERNAL(dbName = "AppDB", storeName = "store") {
   return new Promise((resolve, reject) => {
