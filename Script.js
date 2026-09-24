@@ -5,6 +5,8 @@ let pendingNoItems = [];
 let selectedData = [];
 let sewaKartaList = [];
 let selectedUser = null;
+let selectedBehavStdName = "";
+let selectedCareStdName = "";
 
 document.querySelectorAll(".accordion-header").forEach((header) => {
   header.addEventListener("click", () => {

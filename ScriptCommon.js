@@ -693,82 +693,6 @@ function SHOW_SPECIFIC_DIV_WITH_BLOCK(divId) {
   }
 }
 
-function filterLiveSearchList(inputCtrlId, ulListId, callback) {
-  const inputCtrl = document.getElementById(inputCtrlId);
-  const ulList = document.getElementById(ulListId);
-  const input = inputCtrl.value.toLowerCase();
-  const items = ulList.getElementsByTagName("li");
-  let hasVisibleItems = false;
-
-  for (const item of items) {
-    const liveSearchValue = item.textContent.toLowerCase();
-    if (liveSearchValue.includes(input)) {
-      item.style.display = ""; // Show the item
-      hasVisibleItems = true;
-      item.onclick = function () {
-        inputCtrl.value = item.textContent; // Set input value to selected item
-        ulList.style.display = "none"; // Hide list after selection
-        hasVisibleItems = false;
-        if (callback) callback(item.textContent); // Call the callback with the selected text
-      };
-    } else {
-      item.style.display = "none"; // Hide the item
-    }
-  }
-
-  ulList.style.display = hasVisibleItems ? "block" : "none"; // Show/hide the list based on visible items
-}
-
-function hideLiveSearchOnClick(inputCtrlId, ulListId) {
-  document.addEventListener("click", function (event) {
-    const ulList = document.getElementById(ulListId);
-    const inputCtrl = document.getElementById(inputCtrlId);
-
-    // Check if the click is outside the input and list
-    if (event.target !== inputCtrl && !ulList.contains(event.target)) {
-      ulList.style.display = "none"; // Hide the list
-    }
-  });
-}
-
-function setupLiveSearch(inputCtrlId, ulListId, callback) {
-  const inputCtrl = document.getElementById(inputCtrlId);
-
-  inputCtrl.addEventListener("keyup", function () {
-    filterLiveSearchList(inputCtrlId, ulListId, function (selectedText) {
-      // Call the callback to handle the selected text based on input type
-      if (callback) callback(selectedText);
-    });
-  });
-
-  // Click event to toggle the dropdown list
-  inputCtrl.addEventListener("click", function () {
-    filterLiveSearchList(inputCtrlId, ulListId, function (selectedText) {
-      // Call the callback to handle the selected text based on input type
-      if (callback) callback(selectedText);
-    });
-  });
-
-  // Call the generic function to handle hiding the dropdown
-  hideLiveSearchOnClick(inputCtrlId, ulListId);
-}
-
-function initializedLiveSearchControl(inputCtrlId, ulListId, responseArray) {
-  const inputCtrl = document.getElementById(inputCtrlId);
-  const ulList = document.getElementById(ulListId);
-
-  ulList.innerHTML = "";
-  responseArray?.forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    li.onclick = () => {
-      inputCtrl.value = item;
-      ulList.style.display = "none";
-    };
-    ulList.appendChild(li);
-  });
-}
-
 function showNavBarSection(event, sectionId, containerId, navbarId) {
   event.preventDefault(); // Prevent default link behavior
 
@@ -3290,3 +3214,138 @@ function fillDynamicTableRows(
   // Initial render
   renderRows();
 }
+
+//#region Live Search Method
+function callFilterLiveSearchList(
+  inputCtrlId,
+  clearBtnCtrlId,
+  ulListId,
+  callback,
+) {
+  const inputCtrl = document.getElementById(inputCtrlId);
+  const ulList = document.getElementById(ulListId);
+  const clearBtn = document.getElementById(clearBtnCtrlId);
+  const input = inputCtrl.value.toLowerCase();
+  const items = ulList.getElementsByTagName("li");
+  let hasVisibleItems = false;
+
+  for (const item of items) {
+    const liveSearchValue = item.textContent.toLowerCase();
+    if (liveSearchValue.includes(input)) {
+      item.style.display = ""; // Show the item
+      hasVisibleItems = true;
+      item.onclick = function () {
+        if (clearBtn) clearBtn.style.display = "block";
+        callSetupLiveSearchClearableInput(
+          inputCtrlId,
+          clearBtnCtrlId,
+          callback,
+        );
+        inputCtrl.value = item.textContent; // Set input value to selected item
+        ulList.style.display = "none"; // Hide list after selection
+        hasVisibleItems = false;
+        if (callback) callback(item.textContent); // Call the callback with the selected text
+      };
+    } else {
+      item.style.display = "none"; // Hide the item
+    }
+  }
+
+  ulList.style.display = hasVisibleItems ? "block" : "none"; // Show/hide the list based on visible items
+  if (clearBtn) clearBtn.style.display = input ? "block" : "none";
+  callSetupLiveSearchClearableInput(inputCtrlId, clearBtnCtrlId, callback);
+}
+
+function callHideLiveSearchOnClick(inputCtrlId, clearBtnCtrlId, ulListId) {
+  document.addEventListener("click", function (event) {
+    const ulList = document.getElementById(ulListId);
+    const inputCtrl = document.getElementById(inputCtrlId);
+
+    // Check if the click is outside the input and list
+    if (event.target !== inputCtrl && !ulList.contains(event.target)) {
+      ulList.style.display = "none"; // Hide the list
+    }
+  });
+}
+
+function callSetupLiveSearchClearableInput(
+  liveSearchinputId,
+  liveSearchClearBtnId,
+  callback,
+) {
+  const input = document.getElementById(liveSearchinputId);
+  const clearBtn = document.getElementById(liveSearchClearBtnId);
+
+  if (!input || !clearBtn) {
+    console.error("Invalid input or clear button ID");
+    return;
+  }
+
+  input.addEventListener("input", function () {
+    clearBtn.style.display = this.value ? "block" : "none";
+  });
+
+  clearBtn.addEventListener("click", function () {
+    input.value = "";
+    clearBtn.style.display = "none";
+    input.focus();
+
+    // Notify consuming page that input has been cleared
+    if (callback) callback("");
+  });
+}
+
+function setupLiveSearch(inputCtrlId, clearBtnCtrlId, ulListId, callback) {
+  const inputCtrl = document.getElementById(inputCtrlId);
+
+  inputCtrl.addEventListener("keyup", function () {
+    callFilterLiveSearchList(
+      inputCtrlId,
+      clearBtnCtrlId,
+      ulListId,
+      function (selectedText) {
+        // Call the callback to handle the selected text based on input type
+        if (callback) callback(selectedText);
+      },
+    );
+  });
+
+  // Click event to toggle the dropdown list
+  inputCtrl.addEventListener("click", function () {
+    callFilterLiveSearchList(
+      inputCtrlId,
+      clearBtnCtrlId,
+      ulListId,
+      function (selectedText) {
+        // Call the callback to handle the selected text based on input type
+        if (callback) callback(selectedText);
+      },
+    );
+  });
+
+  // Call the generic function to handle hiding the dropdown
+  callHideLiveSearchOnClick(inputCtrlId, clearBtnCtrlId, ulListId);
+}
+
+function initializedLiveSearchControl(
+  inputCtrlId,
+  clearBtnCtrlId,
+  ulListId,
+  responseArray,
+) {
+  const inputCtrl = document.getElementById(inputCtrlId);
+  const ulList = document.getElementById(ulListId);
+
+  ulList.innerHTML = "";
+  responseArray?.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    li.onclick = () => {
+      inputCtrl.value = item;
+      ulList.style.display = "none";
+      callSetupLiveSearchClearableInput(inputCtrlId, clearBtnCtrlId, callback);
+    };
+    ulList.appendChild(li);
+  });
+}
+//#region END Live Search Method
