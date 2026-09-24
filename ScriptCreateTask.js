@@ -480,10 +480,21 @@ function resetCreateTask() {
   // Reset dropdown
   document.getElementById("categorySelect").value = "";
 
-  // Reset owner
+  // Reset normal owner/reviewer
   document.getElementById("taskOwner").value = "";
-
   document.getElementById("taskReviewer").value = "";
+
+  // Reset Behavioural live search selection
+  document.getElementById("stdBehavInput").value = "";
+  document.getElementById("stdBehavInputClrBtn").style.display = "none";
+  document.getElementById("behaviouralTaskOwner").value = "";
+  selectedBehavStdName = "";
+
+  // Reset Student Care live search selection
+  document.getElementById("stdCareInput").value = "";
+  document.getElementById("stdCareInputClrBtn").style.display = "none";
+  document.getElementById("stdCareTaskOwner").value = "";
+  selectedCareStdName = "";
 
   // Reset description
   document.getElementById("taskDescription").value = "";
@@ -496,15 +507,16 @@ function resetCreateTask() {
 
   // Reset preview image
   document.getElementById("imagePreview").src = "";
-
-  // Hide preview container
   document.getElementById("imagePreviewContainer").style.display = "none";
 
   // Reset global variables
   selectedfile = null;
-
   selectedFile64String = "";
   selectedTaskObj = null;
+  taskDueDays = "";
+
+  // Reset section visibility
+  applyTaskSectionVisibility("");
 }
 
 function backToMainScreenFromCreateTask() {
