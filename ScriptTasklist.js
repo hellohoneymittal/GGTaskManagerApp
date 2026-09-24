@@ -37,12 +37,69 @@ function formatExtensionRequestedDate(value) {
   return formatDate(dateValue.slice(0, 10));
 }
 
+function getTaskDueDateInfo(dueDate) {
+  if (!dueDate) {
+    return {
+      text: "No Due Date",
+      className: "taskList_due_none",
+    };
+  }
+
+  const parts = String(dueDate).trim().split("/");
+
+  if (parts.length !== 3) {
+    return {
+      text: "Invalid Due Date",
+      className: "taskList_due_none",
+    };
+  }
+
+  const due = new Date(
+    Number(parts[2]),
+    Number(parts[1]) - 1,
+    Number(parts[0]),
+  );
+
+  due.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round(
+    (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  let statusText = "";
+  let className = "";
+
+  if (diffDays < 0) {
+    const days = Math.abs(diffDays);
+    statusText = `Overdue by ${days} day${days === 1 ? "" : "s"}`;
+    className = "taskList_due_overdue";
+  } else if (diffDays === 0) {
+    statusText = "Due Today";
+    className = "taskList_due_today";
+  } else if (diffDays === 1) {
+    statusText = "Due Tomorrow";
+    className = "taskList_due_tomorrow";
+  } else {
+    statusText = `Due in ${diffDays} days`;
+    className = "taskList_due_upcoming";
+  }
+
+  return {
+    text: `Due Date: ${dueDate} · ${statusText}`,
+    className,
+  };
+}
+
 function taskList_renderTasks(tasks = taskList_data) {
   const taskListContainer = document.getElementById("taskList_taskList");
 
   taskListContainer.innerHTML = "";
 
   tasks.forEach((task) => {
+    const dueDateInfo = getTaskDueDateInfo(task.dueDate);
     const extensionStatus = String(task.extStatus || "").trim();
     const extensionStatusKey = extensionStatus.toLowerCase();
     const canRequestExtension =
@@ -154,6 +211,10 @@ function taskList_renderTasks(tasks = taskList_data) {
 
               <div class="taskList_status ${taskList_getStatusClass(task.status)}">
                 ${task.status}
+              </div>
+
+              <div class="taskList_dueDate ${dueDateInfo.className}">
+                ${dueDateInfo.text}
               </div>
 
             </div>
@@ -374,29 +435,29 @@ async function showTaskListPopup() {
 }
 
 function PrepareTaskListData() {
-  taskList_data = taskList_allData
-    // .filter((task) => task.ticketFor?.startsWith("ServiceApp"))
-    .map((task) => {
-      const status = task.status || "Pending";
+  taskList_data = taskList_allData.map((task) => {
+    const status = task.status || "Pending";
 
-      return {
-        ...task,
-        status,
-        canReview:
-          ((status === "Pending" || status === "In Progress") &&
-            task.actionOwnerName === selectedDevoteeName) ||
-          (status === "In Review" &&
-            task.reviewerName === selectedDevoteeName) ||
-          (status === "Due Date Ext Req" &&
-            task.reviewerName === selectedDevoteeName),
-      };
-    });
+    return {
+      ...task,
+      status,
+      canReview:
+        ((status === "Pending" || status === "In Progress") &&
+          task.actionOwnerName === selectedDevoteeName) ||
+        ((status === "In Review" || status === "Due Date Ext Req") &&
+          (task.reviewerName === selectedDevoteeName ||
+            task.actionOwnerName === selectedDevoteeName)),
+    };
+  });
 }
 
 function taskList_bindFilters() {
+  const dueDateDDL = document.getElementById("taskDueDateFilter");
   const statusDDL = document.getElementById("taskStatusFilter");
   const serviceDDL = document.getElementById("taskServiceFilter");
   const ownerDDL = document.getElementById("taskOwnerFilter");
+
+  dueDateDDL.addEventListener("change", taskList_applyFilters);
 
   // Get unique Statuses
   const statuses = [...new Set(taskList_data.map((x) => x.status))].sort();
@@ -450,10 +511,65 @@ function taskList_bindFilters() {
   taskList_applyFilters();
 }
 
+function taskList_checkDueDateFilter(dueDate, filter) {
+  if (filter === "All") return true;
+
+  if (!dueDate) {
+    return filter === "NoDueDate";
+  }
+
+  const parts = String(dueDate).trim().split("/");
+
+  if (parts.length !== 3) return false;
+
+  const due = new Date(
+    Number(parts[2]),
+    Number(parts[1]) - 1,
+    Number(parts[0]),
+  );
+
+  due.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round(
+    (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  switch (filter) {
+    case "Overdue":
+      return diffDays < 0;
+
+    case "Today":
+      return diffDays === 0;
+
+    case "Tomorrow":
+      return diffDays === 1;
+
+    case "Next2Days":
+      return diffDays >= 1 && diffDays <= 2;
+
+    case "NextWeek":
+      return diffDays >= 1 && diffDays <= 7;
+
+    case "Later":
+      return diffDays > 7;
+
+    case "NoDueDate":
+      return false;
+
+    default:
+      return true;
+  }
+}
+
 function taskList_applyFilters() {
   const status = document.getElementById("taskStatusFilter").value;
   const service = document.getElementById("taskServiceFilter").value;
   const owner = document.getElementById("taskOwnerFilter").value;
+  const dueDateFilter = document.getElementById("taskDueDateFilter").value;
+
   const search = document
     .getElementById("taskSearch")
     .value.trim()
@@ -470,14 +586,29 @@ function taskList_applyFilters() {
       return false;
     }
 
+    // Due Date Filter
+    if (!taskList_checkDueDateFilter(task.dueDate, dueDateFilter)) {
+      return false;
+    }
+
+    // Owner Filter
     // Owner Filter
     if (owner !== "All") {
-      const taskOwner = ["In Review", "Due Date Ext Req"].includes(task.status)
-        ? task.reviewerName || ""
-        : task.actionOwnerName || "";
+      const isReviewStatus = ["In Review", "Due Date Ext Req"].includes(
+        task.status,
+      );
 
-      if (taskOwner !== owner) {
-        return false;
+      if (isReviewStatus) {
+        const isOwner =
+          task.actionOwnerName === owner || task.reviewerName === owner;
+
+        if (!isOwner) {
+          return false;
+        }
+      } else {
+        if (task.actionOwnerName !== owner) {
+          return false;
+        }
       }
     }
 

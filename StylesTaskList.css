@@ -463,3 +463,37 @@
 .taskList_btnDisabled:hover {
   opacity: 0.35 !important;
 }
+
+.taskList_dueDate {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.taskList_due_overdue {
+  background: #f8d7da;
+  color: #b42318;
+}
+
+.taskList_due_today {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.taskList_due_tomorrow {
+  background: #ffe0b2;
+  color: #9a5b00;
+}
+
+.taskList_due_upcoming {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.taskList_due_none {
+  background: #e5e7eb;
+  color: #6b7280;
+}

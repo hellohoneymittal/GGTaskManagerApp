@@ -17,6 +17,20 @@
 
       <div class="taskList_filterSection">
         <div class="taskList_filterBox">
+          <label>Due Date</label>
+          <select id="taskDueDateFilter">
+            <option value="All">All</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Today">Today</option>
+            <option value="Tomorrow">Tomorrow</option>
+            <option value="Next2Days">In Next 2 Days</option>
+            <option value="NextWeek">Due In Next Week</option>
+            <option value="Later">Due Later</option>
+            <option value="NoDueDate">No Due Date</option>
+          </select>
+        </div>
+
+        <div class="taskList_filterBox">
           <label>Status</label>
           <select
             id="taskStatusFilter"
