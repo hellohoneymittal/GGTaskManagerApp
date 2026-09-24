@@ -21,6 +21,7 @@ const SEWAKARTA_LIST = [
 let GET_TASK_LIST_RESPONSE = [];
 let TASK_MASTER = {};
 let taskDueDays = 0;
+
 let SF_MAP = {};
 let selectedFile64String = "";
 let selectedfile = "";
@@ -683,6 +684,7 @@ async function createNewTaskBtnClick() {
   }
 
   const payload = {
+    task: selectedTaskObj?.task || "",
     category: category,
 
     owner: updatedOwner,
