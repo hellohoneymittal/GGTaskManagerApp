@@ -2649,6 +2649,7 @@ function convertToMinutes(time) {
 }
 
 function CONVERT_ROWS_TO_OBJECTS(data) {
+  if (data.length === 0) return [];
   const keys = data[0].map((header) =>
     header
       .replace(/[^\w\s]/g, "")
