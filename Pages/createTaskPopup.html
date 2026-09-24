@@ -54,7 +54,19 @@
     <div id="behaviouralTaskDiv">
       <div>
         <label>Select Student</label>
-        <select id="behaviouralSelect"></select>
+
+        <div class="liveSearchContainer">
+          <input
+            type="text"
+            id="stdBehavInput"
+            class="liveSearch"
+            placeholder="Select Student..."
+          />
+          <button class="liveSearchClearBtn" id="stdBehavInputClrBtn">
+            &times;
+          </button>
+          <ul id="stdBehavInputULList" class="liveSearchUL"></ul>
+        </div>
       </div>
 
       <div id="behaviouralTaskDivReviewer">
@@ -62,6 +74,36 @@
         <input
           type="text"
           id="behaviouralTaskOwner"
+          class="grayOut"
+          readonly
+          placeholder="Task owner auto selected"
+        />
+      </div>
+    </div>
+
+    <div id="stdCareTaskDiv">
+      <div>
+        <label>Select Student</label>
+
+        <div class="liveSearchContainer">
+          <input
+            type="text"
+            id="stdCareInput"
+            class="liveSearch"
+            placeholder="Select Student..."
+          />
+          <button class="liveSearchClearBtn" id="stdCareInputClrBtn">
+            &times;
+          </button>
+          <ul id="stdCareInputULList" class="liveSearchUL"></ul>
+        </div>
+      </div>
+
+      <div id="stdCareTaskDivReviewer">
+        <label>Task Owner</label>
+        <input
+          type="text"
+          id="stdCareTaskOwner"
           class="grayOut"
           readonly
           placeholder="Task owner auto selected"

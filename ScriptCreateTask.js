@@ -35,7 +35,7 @@ function convertRowsToTaskMaster(data, loginType) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
 
-      const departmentType = row[1];
+      const departmentType = row[7];
       const serviceType = row[2];
 
       const taskObj = {
@@ -105,6 +105,50 @@ let behaviouralTask = [
   },
 ];
 
+let stdCareTask = [
+  {
+    task: "Student Health Issues",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+
+  {
+    task: "Health Checkup Follow-up",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+
+  {
+    task: "Parent Meeting",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+
+  {
+    task: "Cloth Management",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+
+  {
+    task: "Quality and Time of Prasadam",
+    owner: "",
+    reviewer: "",
+    dueDays: 2,
+  },
+
+  {
+    task: "Personal Need (Oil, Soap etc.)",
+    owner: "",
+    reviewer: "",
+    dueDays: 1,
+  },
+];
+
 function applyTaskSectionVisibility(category) {
   const loginType = selectedUser?.loginType;
 
@@ -114,10 +158,15 @@ function applyTaskSectionVisibility(category) {
     "behaviouralTaskDivReviewer",
   );
 
+  const stdCareDiv = document.getElementById("stdCareTaskDiv");
+  const stdCareReviewerDiv = document.getElementById("stdCareTaskDivReviewer");
+
   // Hide everything by default
   normalDiv.style.display = "none";
   behaviouralDiv.style.display = "none";
   behaviouralOwnerDiv.style.display = "none";
+  stdCareDiv.style.display = "none";
+  stdCareReviewerDiv.style.display = "none";
 
   switch (loginType) {
     case "Sewakarta":
@@ -127,17 +176,19 @@ function applyTaskSectionVisibility(category) {
       if (!category) return;
 
       if (category === "Behavioural Issues") {
-        loadBehaviouralStudents();
-
         // Show Behavioural Section
         behaviouralDiv.style.display = "block";
 
-        // Sewakarta can see Task Owner
+        // Sewakarta can see Task Owner / Reviewer
         behaviouralOwnerDiv.style.display = "block";
+      } else if (category === "Student Care") {
+        stdCareDiv.style.display = "block";
+        stdCareReviewerDiv.style.display = "block";
       } else {
         // Normal Categories
         normalDiv.style.display = "block";
       }
+
       break;
 
     case "Parents":
@@ -146,18 +197,17 @@ function applyTaskSectionVisibility(category) {
 
       if (!category) return;
 
-      if (category === "Behavioural Issues") {
-        loadBehaviouralStudents();
-
-        // Show only student dropdown
-        behaviouralDiv.style.display = "block";
-
-        // Hide Task Owner
-        behaviouralOwnerDiv.style.display = "none";
+      if (category === "Student Care") {
+        stdCareDiv.style.display = "block";
+        stdCareReviewerDiv.style.display = "none";
+      } else if (category === "Behavioural Issues") {
+        // Parents are NOT allowed to create Behavioural Issues tasks
+        return;
       } else {
-        // Agar Parent ke liye normal categories bhi allowed hain
-        normalDiv.style.display = "none";
+        // Parents can create other normal categories
+        normalDiv.style.display = "block";
       }
+
       break;
 
     default:
@@ -209,162 +259,6 @@ function populateServiceTypes() {
   });
 }
 
-function old_populateCreateTaskData(response) {
-  const loginType = selectedUser?.loginType;
-
-  // Build TASK_MASTER according to current login type
-  TASK_MASTER = convertRowsToTaskMaster(
-    response?.data?.taskMasterResponse,
-    loginType,
-  );
-
-  SF_MAP = CREATE_MAP(
-    response?.data?.stdDatabaseResponse,
-    6,
-    7,
-    (row) => row[1] === "Y",
-    (a, b) => a[0].localeCompare(b[0]),
-  );
-
-  // Behavioural Issues is only available for Sewakarta
-  if (loginType === "Sewakarta" && TASK_MASTER["Gurukul"]?.services) {
-    TASK_MASTER["Gurukul"].services["Behavioural Issues"] = {
-      tasks: behaviouralTask,
-    };
-  }
-
-  SET_DIV_TITLE("createTaskPopup", "Create Task");
-
-  const departmentSelect = document.getElementById("departmentSelect");
-  const categorySelect = document.getElementById("categorySelect");
-  const taskButtonsContainer = document.getElementById("taskButtonsContainer");
-  const taskDescription = document.getElementById("taskDescription");
-  const taskOwner = document.getElementById("taskOwner");
-  const taskReviewer = document.getElementById("taskReviewer");
-  const taskList = document.getElementById("taskList");
-
-  // --------------------------------------------------
-  // Department Dropdown
-  // --------------------------------------------------
-
-  departmentSelect.innerHTML = "";
-
-  Object.keys(TASK_MASTER).forEach((department) => {
-    const option = document.createElement("option");
-
-    option.value = department;
-    option.textContent = department;
-
-    departmentSelect.appendChild(option);
-  });
-
-  // --------------------------------------------------
-  // Populate Service Types
-  // --------------------------------------------------
-
-  function populateServiceTypes() {
-    categorySelect.innerHTML = "";
-
-    const selectedDepartment = departmentSelect.value;
-
-    if (!selectedDepartment) return;
-
-    const services = TASK_MASTER[selectedDepartment]?.services || {};
-
-    Object.keys(services).forEach((serviceType) => {
-      const option = document.createElement("option");
-
-      option.value = serviceType;
-      option.textContent = serviceType;
-
-      categorySelect.appendChild(option);
-    });
-
-    // Trigger service selection
-    categorySelect.dispatchEvent(new Event("change"));
-  }
-
-  // --------------------------------------------------
-  // Default Department
-  // --------------------------------------------------
-
-  if (TASK_MASTER["Gurukul"]) {
-    departmentSelect.value = "Gurukul";
-    populateServiceTypes();
-  } else if (departmentSelect.options.length > 0) {
-    departmentSelect.selectedIndex = 0;
-    populateServiceTypes();
-  }
-
-  // --------------------------------------------------
-  // Parents -> Gurukul
-  // --------------------------------------------------
-
-  if (loginType === "Parents" && TASK_MASTER["Gurukul"]) {
-    departmentSelect.value = "Gurukul";
-    // departmentSelect.disabled = true;
-    populateServiceTypes();
-  } else {
-    departmentSelect.disabled = false;
-  }
-
-  // --------------------------------------------------
-  // Department Change
-  // --------------------------------------------------
-
-  departmentSelect.addEventListener("change", populateServiceTypes);
-
-  // --------------------------------------------------
-  // Service Type Change
-  // --------------------------------------------------
-
-  categorySelect.addEventListener("change", () => {
-    const selectedDepartment = departmentSelect.value;
-    const selectedServiceType = categorySelect.value;
-
-    applyTaskSectionVisibility(selectedServiceType);
-
-    taskButtonsContainer.innerHTML = "";
-
-    taskDescription.value = "";
-    taskOwner.value = "";
-    taskReviewer.value = "";
-    taskDueDays = "";
-
-    if (!selectedDepartment || !selectedServiceType) return;
-
-    const serviceData =
-      TASK_MASTER[selectedDepartment]?.services?.[selectedServiceType];
-
-    if (!serviceData) return;
-
-    serviceData.tasks.forEach((taskObj) => {
-      const button = document.createElement("button");
-
-      button.className = "task-btn";
-      button.textContent = taskObj.task;
-
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".task-btn").forEach((btn) => {
-          btn.classList.remove("selected");
-        });
-
-        button.classList.add("selected");
-
-        // Populate on task selection
-        taskDescription.value = "";
-        taskOwner.value = taskObj.owner;
-        taskReviewer.value = taskObj.reviewer;
-        taskDueDays = taskObj.dueDays;
-      });
-
-      taskButtonsContainer.appendChild(button);
-    });
-  });
-
-  SHOW_SPECIFIC_DIV("createTaskPopup");
-}
-
 function populateCreateTaskData(response) {
   const loginType = selectedUser?.loginType;
 
@@ -382,10 +276,69 @@ function populateCreateTaskData(response) {
     (a, b) => a[0].localeCompare(b[0]),
   );
 
+  const data = Object.keys(SF_MAP || {});
+
+  //initialize live search for student behvioural list.
+  setupLiveSearch(
+    "stdBehavInput",
+    "stdBehavInputClrBtn",
+    "stdBehavInputULList",
+    function (selectedText) {
+      selectedBehavStdName = selectedText;
+      const taskOwner = document.getElementById("behaviouralTaskOwner");
+      if (selectedBehavStdName) {
+        taskOwner.value = "";
+        const owner = SF_MAP[selectedBehavStdName];
+        taskOwner.value = owner === "NA" ? "Disciplinary Team" : owner;
+      } else {
+        taskOwner.value = "";
+      }
+    },
+  );
+
+  initializedLiveSearchControl(
+    "stdBehavInput",
+    "stdBehavInputClrBtn",
+    "stdBehavInputULList",
+    data,
+  );
+
+  //initialize live search for student care list.
+  setupLiveSearch(
+    "stdCareInput",
+    "stdCareInputClrBtn",
+    "stdCareInputULList",
+    function (selectedText) {
+      selectedCareStdName = selectedText;
+      const taskOwner = document.getElementById("stdCareTaskOwner");
+      if (selectedCareStdName) {
+        taskOwner.value = "";
+        const owner = SF_MAP[selectedCareStdName];
+        taskOwner.value = owner === "NA" ? "Disciplinary Team" : owner;
+      } else {
+        taskOwner.value = "";
+      }
+    },
+  );
+
+  initializedLiveSearchControl(
+    "stdCareInput",
+    "stdCareInputClrBtn",
+    "stdCareInputULList",
+    data,
+  );
+
   // Behavioural Issues is only available for Sewakarta
   if (loginType === "Sewakarta" && TASK_MASTER["Gurukul"]?.services) {
     TASK_MASTER["Gurukul"].services["Behavioural Issues"] = {
       tasks: behaviouralTask,
+    };
+  }
+
+  // Student Care Issues
+  if (TASK_MASTER["Gurukul"]?.services) {
+    TASK_MASTER["Gurukul"].services["Student Care"] = {
+      tasks: stdCareTask,
     };
   }
 
@@ -523,33 +476,6 @@ function populateCreateTaskData(response) {
   SHOW_SPECIFIC_DIV("createTaskPopup");
 }
 
-function loadBehaviouralStudents() {
-  const studentSelect = document.getElementById("behaviouralSelect");
-  const taskOwner = document.getElementById("behaviouralTaskOwner");
-
-  studentSelect.innerHTML = '<option value="">Select Student</option>';
-
-  taskOwner.value = "";
-
-  Object.keys(SF_MAP).forEach((student) => {
-    const option = document.createElement("option");
-    option.value = student;
-    option.textContent = student;
-
-    studentSelect.appendChild(option);
-  });
-
-  studentSelect.onchange = function () {
-    const selectedStudent = this.value;
-    if (!selectedStudent) {
-      taskOwner.value = "";
-      return;
-    }
-    const owner = SF_MAP[selectedStudent];
-    taskOwner.value = owner === "NA" ? "Disciplinary Team" : owner;
-  };
-}
-
 function resetCreateTask() {
   // Reset dropdown
   document.getElementById("categorySelect").value = "";
@@ -634,6 +560,7 @@ async function createNewTaskBtnClick() {
   const description = document.getElementById("taskDescription").value.trim();
 
   const isBehavioural = category === "Behavioural Issues";
+  const isStudentCare = category === "Student Care";
 
   // Normal task controls
   const owner = document.getElementById("taskOwner").value;
@@ -644,15 +571,17 @@ async function createNewTaskBtnClick() {
     "behaviouralTaskOwner",
   ).value;
 
-  const studentName = document.getElementById("behaviouralSelect").value;
+  // Student Care task controls
+  const stdCareOwner = document.getElementById("stdCareTaskOwner").value;
 
   if (!category) {
     SHOW_ERROR_POPUP("Please select category");
     return;
   }
 
+  // Behavioural Issues
   if (isBehavioural) {
-    if (!studentName) {
+    if (!selectedBehavStdName) {
       SHOW_ERROR_POPUP("Please select student");
       return;
     }
@@ -663,13 +592,32 @@ async function createNewTaskBtnClick() {
       );
       return;
     }
-  } else {
+  }
+
+  // Student Care
+  else if (isStudentCare) {
+    if (!selectedCareStdName) {
+      SHOW_ERROR_POPUP("Please select student");
+      return;
+    }
+
+    if (!stdCareOwner) {
+      SHOW_ERROR_POPUP(
+        "Please select a predefined std care task first before proceeding.",
+      );
+      return;
+    }
+  }
+
+  // Normal Task
+  else {
     if (!owner) {
       SHOW_ERROR_POPUP("Please select a sub category first before proceeding.");
       return;
     }
   }
 
+  // Description validation
   if (!description || description.trim().split(/\s+/).length < 5) {
     SHOW_ERROR_POPUP("Describe your task in at least 5 words.");
     return;
@@ -677,6 +625,7 @@ async function createNewTaskBtnClick() {
 
   // Calculate Due Date
   const dueDate = new Date();
+
   dueDate.setDate(dueDate.getDate() + Number(taskDueDays));
 
   const taskDueDate =
@@ -686,29 +635,71 @@ async function createNewTaskBtnClick() {
     "/" +
     dueDate.getFullYear();
 
-  const updatedOwner = isBehavioural ? behaviouralOwner : owner;
+  const selectedOwner = isBehavioural
+    ? behaviouralOwner
+    : isStudentCare
+      ? stdCareOwner
+      : owner;
+
+  const updatedOwner =
+    selectedOwner === "Disciplinary Team"
+      ? "Charu Chitra Sakhi Mataji"
+      : selectedOwner;
+
+  // --------------------------------------------------
+  // Reviewer
+  // Behavioural + Student Care → Owner is Reviewer
+  // Normal task → Selected Reviewer
+  // --------------------------------------------------
+
+  const updatedReviewer =
+    isBehavioural || isStudentCare ? updatedOwner : reviewer;
+
+  // --------------------------------------------------
+  // WhatsApp Group
+  // --------------------------------------------------
+
   let whatsappGroup = "";
-  if (isBehavioural) {
+
+  if (isBehavioural || isStudentCare) {
     whatsappGroup =
-      updatedOwner === "Disciplinary Team"
+      selectedOwner === "Disciplinary Team"
         ? "GurukulInviligationDisciplinaryTeam"
         : "GurukulExternal";
   } else {
     whatsappGroup = selectedTaskObj?.whatsappGroup || "";
   }
+
   const payload = {
     category: category,
+
     owner: updatedOwner,
-    reviewer: isBehavioural ? "" : reviewer,
+
+    reviewer: updatedReviewer,
+
     description: description,
+
     createdBy: selectedDevoteeName,
-    studentName: isBehavioural ? studentName : "",
+
+    studentName:
+      isBehavioural || isStudentCare
+        ? isBehavioural
+          ? selectedBehavStdName
+          : selectedCareStdName
+        : "",
+
     selectedFile64String: selectedFile64String ?? "",
+
     selectedFileType: selectedfile?.type ?? "",
+
     selectedFileName: selectedfile?.name ?? "",
+
     dueDays: taskDueDays,
+
     dueDate: taskDueDate,
+
     department: department,
+
     whatsappGroup: whatsappGroup,
   };
 
@@ -767,7 +758,6 @@ function taskList_renderTasks(tasks = taskList_data) {
   taskListContainer.innerHTML = "";
 
   tasks.forEach((task) => {
-    debugger;
     const extensionStatus = String(task.extStatus || "").trim();
     const extensionStatusKey = extensionStatus.toLowerCase();
     const canRequestExtension =
@@ -1368,7 +1358,6 @@ function getTaskDueDate(task) {
 // Open Popup
 
 function openExtensionPopup(taskId) {
-  debugger;
   const task = taskList_data.find(
     (item) => String(item.taskId) === String(taskId),
   );

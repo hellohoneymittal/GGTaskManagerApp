@@ -811,47 +811,6 @@ tbody tr:nth-child(even) {
   color: #6c757d;
 }
 
-.liveSearchContainer {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
-
-.liveSearchContainer select {
-  position: relative;
-  z-index: 1;
-}
-
-.popup .liveSearch {
-  margin-bottom: 1px !important;
-}
-
-.popup .liveSearchUL {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  display: none;
-  position: absolute;
-  width: 100%;
-  background-color: white;
-  border: 1px solid #ddd;
-  max-height: 12rem;
-  overflow-y: auto;
-  z-index: 2;
-  box-sizing: border-box;
-  text-align: left;
-}
-
-.popup .liveSearchUL li {
-  padding: 10px;
-  cursor: pointer;
-  border-bottom: 1px solid #ddd;
-}
-
-.popup .liveSearchUL li:hover {
-  background-color: #f0f0f0;
-}
-
 .popup-content img {
   max-width: 50%; /* Ensure the image resizes within the container */
   height: auto; /* Maintain aspect ratio */
@@ -2282,3 +2241,67 @@ input[type="radio"] {
   cursor: not-allowed;
   opacity: 0.8;
 }
+
+/* #region Live Search */
+.liveSearchContainer {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.liveSearchContainer select {
+  position: relative;
+  z-index: 1;
+}
+
+.popup .liveSearch {
+  margin-bottom: 1px !important;
+}
+
+.popup .liveSearchUL {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: none;
+  position: absolute;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ddd;
+  max-height: 12rem;
+  overflow-y: auto;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.popup .liveSearchUL li {
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.popup .liveSearchUL li:hover {
+  background-color: #f0f0f0;
+}
+
+.popup .liveSearchClearBtn {
+  width: 10% !important;
+  position: absolute !important;
+  right: -5px !important;
+  top: 44% !important;
+  transform: translateY(-50%) !important;
+  cursor: pointer !important;
+  font-size: 20px !important;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  display: none;
+  color: red !important;
+  z-index: 9999 !important;
+}
+
+.popup .liveSearchClearBtn:hover {
+  color: #333 !important;
+}
+
+/* #region END Live Search */
