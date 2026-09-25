@@ -30,6 +30,7 @@ async function LOAD_HTML_FILE(fileName, containerId = "popupContainer") {
 async function INIT_POPUPS() {
   const files = [
     "createTaskPopup.html",
+    "adhocCreateTaskPopup.html",
     "taskListPopup.html",
     "myTaskPopup.html",
   ];
