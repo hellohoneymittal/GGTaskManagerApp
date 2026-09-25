@@ -1,0 +1,102 @@
+<!doctype html>
+<div class="popup" id="adhocCreateTaskPopup">
+  <div class="popup-content scrollable-content">
+    <div class="user-info-block"></div>
+
+    <div class="refresh-button-container">
+      <div class="popup-title-box"></div>
+
+      <div class="refresh-button-div">
+        <button class="refresh-btn-new" onclick="adhocCallCreateBtnAPI()">
+          <span class="refresh-text">Refresh</span>
+          <span class="refresh-icon">⟳</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Department -->
+    <div>
+      <label>Select Department</label>
+
+      <select id="adhocDepartmentSelect"></select>
+    </div>
+
+    <!-- Category -->
+    <div>
+      <label>Category</label>
+
+      <input type="text" id="adhocCategory" placeholder="Enter category" />
+    </div>
+
+    <!-- Task Owner -->
+    <div>
+      <label>Task Owner</label>
+
+      <select id="adhocTaskOwner">
+        <option value="">Select Task Owner</option>
+      </select>
+    </div>
+
+    <!-- Task Reviewer -->
+    <div>
+      <label>Task Reviewer</label>
+
+      <select id="adhocTaskReviewer">
+        <option value="">Select Task Reviewer</option>
+      </select>
+    </div>
+
+    <!-- Task Description -->
+    <div style="margin-top: 25px">
+      <label>Task Description</label>
+
+      <textarea
+        id="adhocTaskDescription"
+        placeholder="Please add task details in at least 5 words."
+      ></textarea>
+    </div>
+
+    <!-- Upload File -->
+    <div>
+      <label for="adhocUploadControl" style="margin-bottom: 10px">
+        Upload File
+      </label>
+
+      <input
+        style="width: 96% !important"
+        type="file"
+        accept="image/*"
+        id="adhocUploadControl"
+        onchange="adhocFetchFile()"
+      />
+    </div>
+
+    <!-- Image Preview -->
+    <div
+      id="adhocImagePreviewContainer"
+      style="margin-top: 15px; display: none"
+    >
+      <label>Preview</label>
+
+      <img
+        id="adhocImagePreview"
+        alt="Preview"
+        style="
+          width: 100%;
+          max-height: 250px;
+          object-fit: contain;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+          margin-top: 10px;
+        "
+      />
+    </div>
+
+    <!-- Buttons -->
+    <div class="button-row">
+      <button class="red" onclick="adhocResetCreateTask()">Reset</button>
+
+      <button class="green" onclick="adhocCreateTaskSubmit()">Submit</button>
+    </div>
+  </div>
+</div>

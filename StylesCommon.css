@@ -307,6 +307,54 @@ body {
   background-color: #e4c993 !important;
 }
 
+.popup-content .teal,
+.confirm-popup-content .teal {
+  background-color: #00897b;
+  color: white;
+}
+
+.popup-content .indigo,
+.confirm-popup-content .indigo {
+  background-color: #3949ab;
+  color: white;
+}
+
+.popup-content .pink,
+.confirm-popup-content .pink {
+  background-color: #d81b60;
+  color: white;
+}
+
+.popup-content .cyan,
+.confirm-popup-content .cyan {
+  background-color: #00acc1;
+  color: white;
+}
+
+.popup-content .brown,
+.confirm-popup-content .brown {
+  background-color: #6d4c41;
+  color: white;
+}
+
+.popup-content .deep-orange,
+.confirm-popup-content .deep-orange {
+  background-color: #f4511e;
+  color: white;
+}
+
+.popup-content .lime,
+.confirm-popup-content .lime {
+  background-color: #7cb342;
+  color: white;
+}
+
+.popup-content .deep-purple,
+.confirm-popup-content .deep-purple {
+  background-color: #5e35b1;
+  color: white;
+}
+
 /* Radio buttons */
 .scale-popup-content .radio-group {
   display: inline-block;
