@@ -1,7 +1,7 @@
 function renderMenus(roleData) {
   SHOW_BUTTON_BY_ADMIN_ROLE(
-    "gatePassApprovalBtn",
-    "Hostel Incharge Role",
+    "adhocCreateTaskBtn",
+    "Adhoc Task Creation",
     roleData,
   );
 
@@ -1110,6 +1110,7 @@ async function CALL_API_WITH_CACHE(
   forceRefresh = false,
   isWriteOperation = false,
 ) {
+  debugger;
   if (!forceRefresh) {
     const cachedResponse = await DB_GET(
       apiType,
@@ -1132,7 +1133,7 @@ async function CALL_API_WITH_CACHE(
 
     response = await CALL_API(apiType, inputData);
 
-    if (response) {
+    if (response?.status) {
       console.log(`API Success on Attempt ${attempt} : ${apiType}`);
       break;
     }
@@ -1147,7 +1148,7 @@ async function CALL_API_WITH_CACHE(
     }
   }
 
-  if (response && !isWriteOperation) {
+  if (response?.status && response?.data && !isWriteOperation) {
     await DB_SET(
       apiType,
       response,
@@ -1585,6 +1586,7 @@ function SHOW_BUTTON_BY_ADMIN_ROLE(buttonId, roleKey, roleObj) {
   const button = document.getElementById(buttonId);
   if (!button) return;
 
+  debugger;
   const userRoleValue = roleObj?.[roleKey]?.toString().trim().toLowerCase();
 
   if (userRoleValue && userRoleValue.includes("admin")) {
@@ -3299,33 +3301,99 @@ function callSetupLiveSearchClearableInput(
 
 function setupLiveSearch(inputCtrlId, clearBtnCtrlId, ulListId, callback) {
   const inputCtrl = document.getElementById(inputCtrlId);
+  const ulList = document.getElementById(ulListId);
 
-  inputCtrl.addEventListener("keyup", function () {
+  let activeIndex = -1;
+
+  inputCtrl.addEventListener("keyup", function (event) {
+    if (
+      event.key === "ArrowUp" ||
+      event.key === "ArrowDown" ||
+      event.key === "Enter"
+    ) {
+      return;
+    }
+
+    activeIndex = -1;
+
     callFilterLiveSearchList(
       inputCtrlId,
       clearBtnCtrlId,
       ulListId,
       function (selectedText) {
-        // Call the callback to handle the selected text based on input type
         if (callback) callback(selectedText);
       },
     );
   });
 
-  // Click event to toggle the dropdown list
+  inputCtrl.addEventListener("keydown", function (event) {
+    if (
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Enter"
+    ) {
+      return;
+    }
+
+    const visibleItems = Array.from(ulList.getElementsByTagName("li")).filter(
+      (item) => item.style.display !== "none",
+    );
+
+    if (!visibleItems.length) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+
+      activeIndex++;
+
+      if (activeIndex >= visibleItems.length) {
+        activeIndex = 0;
+      }
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+
+      activeIndex--;
+
+      if (activeIndex < 0) {
+        activeIndex = visibleItems.length - 1;
+      }
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      if (activeIndex >= 0 && visibleItems[activeIndex]) {
+        visibleItems[activeIndex].click();
+        activeIndex = -1;
+      }
+
+      return;
+    }
+
+    visibleItems.forEach((item, index) => {
+      item.style.backgroundColor = index === activeIndex ? "#e8f0fe" : "";
+    });
+
+    visibleItems[activeIndex]?.scrollIntoView({
+      block: "nearest",
+    });
+  });
+
   inputCtrl.addEventListener("click", function () {
+    activeIndex = -1;
+
     callFilterLiveSearchList(
       inputCtrlId,
       clearBtnCtrlId,
       ulListId,
       function (selectedText) {
-        // Call the callback to handle the selected text based on input type
         if (callback) callback(selectedText);
       },
     );
   });
 
-  // Call the generic function to handle hiding the dropdown
   callHideLiveSearchOnClick(inputCtrlId, clearBtnCtrlId, ulListId);
 }
 
