@@ -24,7 +24,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     INDEX_DB.storeName,
   );
 
-  if (cacheResponse) {
+  if (cacheResponse?.status) {
+    // if (cacheResponse?.data == "Password Needed") {
+    //   SHOW_ERROR_POPUP(
+    //     "Please enter your password. Mobile number is not accepted for Sewakartas.",
+    //   );
+    //   return;
+    // }
     checkTaskListAccess(cacheResponse);
     selectedUser = cacheResponse?.data;
     selectedDevoteeName = cacheResponse?.data?.name;
@@ -60,10 +66,21 @@ async function submitPass() {
         "GET_ACCESS_FOR_PARENTS_SEWAKARTA",
         request,
       );
-      checkTaskListAccess(response);
-      selectedUser = response?.data;
-      selectedDevoteeName = response?.data?.name;
-      renderMenus(response?.data?.role);
+
+      if (response?.status) {
+        if (!response?.data) {
+          SHOW_ERROR_POPUP(
+            "Please enter your password. Mobile number is not accepted for Sewakartas.",
+          );
+          return;
+        }
+        checkTaskListAccess(response);
+        selectedUser = response?.data;
+        selectedDevoteeName = response?.data?.name;
+        renderMenus(response?.data?.role);
+      } else {
+        SHOW_ERROR_POPUP("Something went wrong");
+      }
     }
   } catch (ex) {
     SHOW_ERROR_POPUP("In catch case:- submitPass");

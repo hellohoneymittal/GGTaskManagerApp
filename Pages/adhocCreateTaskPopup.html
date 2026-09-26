@@ -16,87 +16,120 @@
 
     <!-- Department -->
     <div>
-      <label>Select Department</label>
+      <label> Select Department <span style="color: red">*</span> </label>
 
-      <select id="adhocDepartmentSelect"></select>
+      <select id="adhocDepartmentSelect" required></select>
     </div>
 
     <!-- Category -->
     <div>
-      <label>Category</label>
+      <label> Category <span style="color: red">*</span> </label>
 
-      <input type="text" id="adhocCategory" placeholder="Enter category" />
-    </div>
-
-    <!-- Task Owner -->
-    <div>
-      <label>Task Owner</label>
-
-      <select id="adhocTaskOwner">
-        <option value="">Select Task Owner</option>
-      </select>
-    </div>
-
-    <!-- Task Reviewer -->
-    <div>
-      <label>Task Reviewer</label>
-
-      <select id="adhocTaskReviewer">
-        <option value="">Select Task Reviewer</option>
-      </select>
+      <input
+        type="text"
+        id="adhocCategory"
+        placeholder="Enter category"
+        required
+      />
     </div>
 
     <!-- Task Description -->
     <div style="margin-top: 25px">
-      <label>Task Description</label>
+      <label> Task Description <span style="color: red">*</span> </label>
 
       <textarea
         id="adhocTaskDescription"
         placeholder="Please add task details in at least 5 words."
+        required
       ></textarea>
     </div>
 
-    <!-- Upload File -->
+    <!-- Task Owner -->
     <div>
-      <label for="adhocUploadControl" style="margin-bottom: 10px">
-        Upload File
-      </label>
+      <div>
+        <label> Task Owner <span style="color: red">*</span> </label>
 
-      <input
-        style="width: 96% !important"
-        type="file"
-        accept="image/*"
-        id="adhocUploadControl"
-        onchange="adhocFetchFile()"
-      />
-    </div>
+        <div class="liveSearchContainer">
+          <input
+            type="text"
+            id="adhocTaskOwnerInput"
+            class="liveSearch"
+            placeholder="Select Student..."
+          />
+          <button class="liveSearchClearBtn" id="adhocTaskOwnerInputClrBtn">
+            &times;
+          </button>
+          <ul id="adhocTaskOwnerInputULList" class="liveSearchUL"></ul>
+        </div>
+      </div>
 
-    <!-- Image Preview -->
-    <div
-      id="adhocImagePreviewContainer"
-      style="margin-top: 15px; display: none"
-    >
-      <label>Preview</label>
+      <!-- Task Reviewer -->
+      <div>
+        <label> Task Reviewer <span style="color: red">*</span> </label>
 
-      <img
-        id="adhocImagePreview"
-        alt="Preview"
-        style="
-          width: 100%;
-          max-height: 250px;
-          object-fit: contain;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-          margin-top: 10px;
-        "
-      />
-    </div>
+        <div class="liveSearchContainer">
+          <input
+            type="text"
+            id="adhocTaskReviewerInput"
+            class="liveSearch"
+            placeholder="Select Student..."
+          />
+          <button class="liveSearchClearBtn" id="adhocTaskReviewerInputClrBtn">
+            &times;
+          </button>
+          <ul id="adhocTaskReviewerInputULList" class="liveSearchUL"></ul>
+        </div>
+      </div>
 
-    <!-- Buttons -->
-    <div class="button-row">
-      <button class="red" onclick="adhocResetCreateTask()">Reset</button>
+      <!-- Due Date -->
+      <div>
+        <label> Due Date <span style="color: red">*</span> </label>
 
-      <button class="green" onclick="adhocCreateTaskSubmit()">Submit</button>
+        <input type="date" id="adhocDueDate" required />
+      </div>
+
+      <!-- Upload File -->
+      <div>
+        <label for="adhocUploadControl" style="margin-bottom: 10px">
+          Upload File
+        </label>
+
+        <input
+          style="width: 96% !important"
+          type="file"
+          accept="image/*"
+          id="adhocUploadControl"
+          onchange="adhocFetchFile()"
+        />
+      </div>
+
+      <!-- Image Preview -->
+      <div
+        id="adhocImagePreviewContainer"
+        style="margin-top: 15px; display: none"
+      >
+        <label>Preview</label>
+
+        <img
+          id="adhocImagePreview"
+          alt="Preview"
+          style="
+            width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+          "
+        />
+      </div>
+
+      <!-- Buttons -->
+      <div class="button-row">
+        <button class="red" onclick="adhocResetCreateTask()">Reset</button>
+
+        <button class="green" onclick="adhocCreateTaskSubmit()">Submit</button>
+      </div>
     </div>
   </div>
 </div>
