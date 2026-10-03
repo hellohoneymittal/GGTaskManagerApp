@@ -1,23 +1,3 @@
-const SEWAKARTA_LIST = [
-  "Mahavir Smarana Prabhuji",
-  "Manohar Gaur Prabhuji",
-  "Satya Madhav Prabhuji",
-  "Shesha Sevaka Prabhuji",
-  "Atul Gaur Sewa Prabhuji",
-  "Kasturi Kesavi Mataji",
-  "Balwan Hari Prabhuji",
-  "Naresvara Hari Prabhuji",
-  "Jagatabandhu Prabhuji",
-  "Aravinda Nimai Prabhuji",
-  "Hridaya Parmatma Prabhuji",
-  "Saanta Nimai Prabhuji",
-  "Lokatma Daksh Prabhuji",
-  "Vibhu Caitanya Prabhuji",
-  "Anant Achyuta Prabhuji",
-  "Charu Chitra Sakhi Mataji",
-  "Rishabh Karuna Mataji",
-  "Padma Bhushan Prabhuji",
-];
 let GET_TASK_LIST_RESPONSE = [];
 let TASK_MASTER = {};
 let taskDueDays = 0;
