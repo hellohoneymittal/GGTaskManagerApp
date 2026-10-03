@@ -1416,6 +1416,7 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
+//#region Index DB
 const DB_VERSION = 16;
 
 function DB_OPEN_INTERNAL(dbName = "AppDB", storeName = "store") {
@@ -1581,6 +1582,8 @@ async function DB_CLEAR(dbName = "AppDB", storeName = "store") {
     tx.onabort = () => reject(tx.error);
   });
 }
+
+//#endregion Index DB
 
 function SHOW_BUTTON_BY_ADMIN_ROLE(buttonId, roleKey, roleObj) {
   const button = document.getElementById(buttonId);
