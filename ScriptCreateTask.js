@@ -98,12 +98,6 @@ let behaviouralTask = [
     reviewer: "",
     dueDays: 2,
   },
-  {
-    task: "Discipline monitoring",
-    owner: "",
-    reviewer: "",
-    dueDays: 2,
-  },
 ];
 
 let stdCareTask = [

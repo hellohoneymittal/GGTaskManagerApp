@@ -191,11 +191,6 @@
                 </div>
 
                 <div class="detail-row">
-                  <span class="detail-label">Department</span>
-                  <span id="extensionDepartment">Gurukul</span>
-                </div>
-
-                <div class="detail-row">
                   <span class="detail-label">Category</span>
                   <span id="extensionCategory">Maintenance</span>
                 </div>
@@ -203,6 +198,51 @@
                 <div class="detail-row">
                   <span class="detail-label">Previous Due Date</span>
                   <span id="previousDueDate">15 Sep 2026</span>
+                </div>
+              </div>
+
+              <!-- Task Owner -->
+              <div class="form-group">
+                <label for="extensionOwnerInput">Owner</label>
+
+                <div class="liveSearchContainer">
+                  <input
+                    type="text"
+                    id="extensionOwnerInput"
+                    class="liveSearch"
+                    placeholder="Select owner..."
+                  />
+                  <button
+                    class="liveSearchClearBtn"
+                    id="extensionOwnerInputClrBtn"
+                  >
+                    &times;
+                  </button>
+                  <ul id="extensionOwnerInputULList" class="liveSearchUL"></ul>
+                </div>
+              </div>
+
+              <!-- Task Reviewer -->
+              <div class="form-group">
+                <label for="extensionReviewerInput">Reviewer</label>
+
+                <div class="liveSearchContainer">
+                  <input
+                    type="text"
+                    id="extensionReviewerInput"
+                    class="liveSearch"
+                    placeholder="Select reviewer..."
+                  />
+                  <button
+                    class="liveSearchClearBtn"
+                    id="extensionReviewerInputClrBtn"
+                  >
+                    &times;
+                  </button>
+                  <ul
+                    id="extensionReviewerInputULList"
+                    class="liveSearchUL"
+                  ></ul>
                 </div>
               </div>
 
