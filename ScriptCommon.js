@@ -562,6 +562,64 @@ async function API_HANDLER(request) {
   }
 }
 
+async function API_HANDLER_FETCH(request) {
+  IsLoading(true);
+
+  try {
+    const response = await fetch(APPLICATION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+      },
+      body: JSON.stringify(request),
+      redirect: "follow",
+    });
+
+    console.log("API HTTP STATUS:", response.status);
+    console.log("API OK:", response.ok);
+    console.log("API URL:", response.url);
+    console.log("API REDIRECTED:", response.redirected);
+    console.log("API CONTENT TYPE:", response.headers.get("content-type"));
+
+    const rawText = await response.text();
+
+    console.log("API RAW RESPONSE:", rawText);
+
+    if (!response.ok) {
+      console.error(
+        "API HTTP ERROR:",
+        response.status,
+        response.statusText,
+        rawText,
+      );
+
+      return null;
+    }
+
+    let data;
+
+    try {
+      data = JSON.parse(rawText);
+    } catch (jsonError) {
+      console.error("INVALID JSON RESPONSE:", rawText);
+      return null;
+    }
+
+    if (data?.status) {
+      return data;
+    }
+
+    console.error("API returned status=false:", data);
+
+    return null;
+  } catch (error) {
+    console.error("FETCH ERROR:", error);
+    return null;
+  } finally {
+    IsLoading(false);
+  }
+}
+
 async function API_HANDLER_WITH_APPLICATION_JSON_TYPE(request) {
   try {
     const url = APPLICATION_URL;
@@ -1069,7 +1127,7 @@ async function CALL_API(apiType, data) {
       inputData: data,
     };
     try {
-      const response = await API_HANDLER(request);
+      const response = await API_HANDLER_FETCH(request);
       if (response) {
         return response;
         //
@@ -1110,7 +1168,6 @@ async function CALL_API_WITH_CACHE(
   forceRefresh = false,
   isWriteOperation = false,
 ) {
-  debugger;
   if (!forceRefresh) {
     const cachedResponse = await DB_GET(
       apiType,
@@ -1162,24 +1219,29 @@ async function CALL_API_WITH_CACHE(
 }
 
 async function CALL_API_READ(apiType, inputData = {}) {
-  let response;
-
   for (let attempt = 1; attempt <= 3; attempt++) {
     console.log(`API READ Attempt ${attempt}/3 : ${apiType}`);
 
-    response = await CALL_API(apiType, inputData);
+    const response = await CALL_API(apiType, inputData);
 
     if (response) {
       console.log(`API READ Success on Attempt ${attempt} : ${apiType}`);
-      break;
+
+      return response;
     }
 
     if (attempt < 3) {
-      console.log(`API READ failed. Retrying... : ${apiType}`);
+      const delay = attempt * 1000;
+
+      console.log(`API READ failed. Retrying after ${delay}ms : ${apiType}`);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  return response;
+  console.error(`API READ failed after 3 attempts : ${apiType}`);
+
+  return null;
 }
 
 let currentWriteRequestId = null;
@@ -1589,7 +1651,6 @@ function SHOW_BUTTON_BY_ADMIN_ROLE(buttonId, roleKey, roleObj) {
   const button = document.getElementById(buttonId);
   if (!button) return;
 
-  debugger;
   const userRoleValue = roleObj?.[roleKey]?.toString().trim().toLowerCase();
 
   if (userRoleValue && userRoleValue.includes("admin")) {
