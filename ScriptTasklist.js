@@ -464,13 +464,29 @@ function taskList_toggleAccordion(element) {
   }
 }
 
+function taskList_normalizeName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 async function showTaskListPopup() {
   const response = await CALL_API_READ("GET_ISSUE_TRACKERSHEET_DATA", {
     sheetName: "Pending Actions",
   });
   taskList_allData = CONVERT_ROWS_TO_OBJECTS(response?.data);
   debugger;
-  taskList_data = [...taskList_allData];
+  //taskList_data = [...taskList_allData];
+  taskList_data = taskList_allData.filter((task) => {
+  const status = task.status || "Pending";
+
+  return (
+    ((status === "Pending" || status === "In Progress") &&
+      task.actionOwnerName === selectedDevoteeName) ||
+    ((status === "In Review" || status === "Due Date Ext Req") &&
+      task.reviewerName === selectedDevoteeName)
+  );
+});
 
   PrepareTaskListData();
   console.log("taskList_data", taskList_data);
@@ -482,16 +498,16 @@ async function showTaskListPopup() {
 function PrepareTaskListData() {
   taskList_data = taskList_allData.map((task) => {
     const status = task.status || "Pending";
+    const selectedName = taskList_normalizeName(selectedDevoteeName);
 
     return {
       ...task,
       status,
       canReview:
         ((status === "Pending" || status === "In Progress") &&
-          task.actionOwnerName === selectedDevoteeName) ||
+          taskList_normalizeName(task.actionOwnerName) === selectedName) ||
         ((status === "In Review" || status === "Due Date Ext Req") &&
-          (task.reviewerName === selectedDevoteeName ||
-            task.actionOwnerName === selectedDevoteeName)),
+          taskList_normalizeName(task.reviewerName) === selectedName),
     };
   });
 }
@@ -609,6 +625,7 @@ function taskList_checkDueDateFilter(dueDate, filter) {
   }
 }
 
+
 function taskList_applyFilters() {
   const status = document.getElementById("taskStatusFilter").value;
   const service = document.getElementById("taskServiceFilter").value;
@@ -619,6 +636,13 @@ function taskList_applyFilters() {
     .getElementById("taskSearch")
     .value.trim()
     .toLowerCase();
+
+  const normalizeName = (name) =>
+    String(name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+  const normalizedOwner = normalizeName(owner);
 
   const filtered = taskList_data.filter((task) => {
     // Status Filter
@@ -636,22 +660,25 @@ function taskList_applyFilters() {
       return false;
     }
 
-    // Owner Filter
-    // Owner Filter
+    // Owner / Reviewer Filter
     if (owner !== "All") {
-      const isReviewStatus = ["In Review", "Due Date Ext Req"].includes(
-        task.status,
-      );
+      const isReviewStatus = [
+        "In Review",
+        "Due Date Ext Req"
+      ].includes(task.status);
+
+      const normalizedActionOwner = normalizeName(task.actionOwnerName);
+      const normalizedReviewer = normalizeName(task.reviewerName);
 
       if (isReviewStatus) {
-        const isOwner =
-          task.actionOwnerName === owner || task.reviewerName === owner;
-
-        if (!isOwner) {
+        if (
+          normalizedActionOwner !== normalizedOwner &&
+          normalizedReviewer !== normalizedOwner
+        ) {
           return false;
         }
       } else {
-        if (task.actionOwnerName !== owner) {
+        if (normalizedActionOwner !== normalizedOwner) {
           return false;
         }
       }
@@ -666,6 +693,8 @@ function taskList_applyFilters() {
         task.reviewerName || "",
         task.status || "",
         task.createdBy || "",
+        task.taskId || "",
+        task.remarks || ""
       ]
         .join(" ")
         .toLowerCase();
@@ -678,11 +707,15 @@ function taskList_applyFilters() {
     return true;
   });
 
-  console.log("Selected Owner:", owner);
+  console.log("Selected Devotee:", selectedDevoteeName);
+  console.log("Selected Owner Filter:", owner);
+  console.log("Total Tasks:", taskList_data.length);
   console.log("Filtered Count:", filtered.length);
+  console.log("Filtered Tasks:", filtered);
 
   taskList_renderTasks(filtered);
 }
+
 
 async function taskList_updateStatus(taskId, newStatus) {
   const comment = document.getElementById(`taskComment_${taskId}`).value.trim();
