@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 function checkTaskListAccess(response) {
-  if (response?.data?.loginType === "Sewakarta") {
+  if (response?.data?.loginType === "Sewakarta" && response?.data?.loginVia === "Password") {
     document.getElementById("taskListBtn").style.display = "block";
   } else {
     document.getElementById("taskListBtn").style.display = "none";
@@ -68,12 +68,6 @@ async function submitPass() {
       );
 
       if (response?.status) {
-        if (!response?.data) {
-          SHOW_ERROR_POPUP(
-            "Please enter your password. Mobile number is not accepted for Sewakartas.",
-          );
-          return;
-        }
         checkTaskListAccess(response);
         selectedUser = response?.data;
         selectedDevoteeName = response?.data?.name;
