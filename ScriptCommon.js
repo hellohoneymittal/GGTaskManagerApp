@@ -6,7 +6,8 @@ function renderMenus(roleData) {
   );
 
   SHOW_SPECIFIC_DIV("menuPopup");
-  SET_USER_NAME_ON_SCREEN(selectedUser?.name);
+  const selectedName = (selectedUser?.loginType === "Sewakarta" && selectedUser?.loginVia === "Mobile") ? `${selectedUser?.name} (Login Via Mobile)` : selectedUser?.name;
+  SET_USER_NAME_ON_SCREEN(selectedName);
 }
 
 async function LOAD_HTML_FILE(fileName, containerId = "popupContainer") {
