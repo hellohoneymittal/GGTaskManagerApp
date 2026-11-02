@@ -1480,7 +1480,7 @@ function parseTimeToMinutes(timeStr) {
 }
 
 //#region Index DB
-const DB_VERSION = 16;
+const DB_VERSION = 17;
 
 function DB_OPEN_INTERNAL(dbName = "AppDB", storeName = "store") {
   return new Promise((resolve, reject) => {
