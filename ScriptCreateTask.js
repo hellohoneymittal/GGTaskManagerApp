@@ -343,7 +343,7 @@ function populateCreateTaskData(response) {
 
   // Populate Service Types
   function populateServiceTypes() {
-    categorySelect.innerHTML = "";
+    categorySelect.innerHTML = '<option value="">Select Category</option>';
 
     const selectedDepartment = departmentSelect.value;
 
