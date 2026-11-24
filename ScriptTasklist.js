@@ -236,9 +236,9 @@ function taskList_renderTasks(tasks = taskList_data) {
         </div>
 
         <!-- CONTENT -->
-        <div class="taskList_content">
+        <div class="taskList_content ">
 
-          <div class="taskList_contentInner">
+          <div class="taskList_contentInner scrollable-content taskListScrolll">
 
             <div class="taskList_details">
 

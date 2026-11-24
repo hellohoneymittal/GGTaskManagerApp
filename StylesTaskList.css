@@ -497,3 +497,40 @@
   background: #e5e7eb;
   color: #6b7280;
 }
+
+/* =========================================================
+   TASK LIST SCROLL CONTAINER
+========================================================= */
+
+.popup-content.taskListScrolll {
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.taskList_contentInner.taskListScrolll {
+  max-height: 60vh;
+  max-height: 60dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 700px) {
+  .popup-content.taskListScrolll {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .taskList_contentInner.taskListScrolll {
+    max-height: 52vh;
+    max-height: 52dvh;
+  }
+}
