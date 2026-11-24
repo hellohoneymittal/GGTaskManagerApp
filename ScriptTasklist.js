@@ -798,29 +798,54 @@ function getFilteredActions(actionsData, loginPerson) {
 
   const pendingActions = actionsData["Pending Actions"] || [];
 
-  pendingActions.slice(1).forEach((row) => {    
-      result.push([
-        row[0], // Status
-        row[3], // Date
-        row[4], // Action Description
-        row[1], // Comment / Remarks
-      ]);
-    
+  pendingActions.slice(1).forEach((row) => {
+    result.push([
+      row[0],// Status
+      row[3],// Date
+      row[4],// Action Description
+      row[1],// Comment / Remarks
+    ]);
   });
 
   const closedActions = actionsData["Closed Actions"] || [];
 
   closedActions.slice(1).forEach((row) => {
-    
-      result.push([
-        "Closed", // Status
-        row[0], // Date
-        row[2], // Action Description
-        row[6], // Closure Remarks
-      ]);
+    result.push([
+      "Closed",
+      row[0],
+      row[2],
+      row[6],
+    ]);
   });
 
-  return result;
+  // Convert dd/MM/yyyy into comparable timestamp
+  function getDateTimestamp(dateValue) {
+    if (dateValue instanceof Date) {
+      return dateValue.getTime();
+    }
+
+    if (!dateValue) return 0;
+
+    const parts = String(dateValue).trim().split("/");
+
+    if (parts.length === 3) {
+      const day = Number(parts[0]);
+      const month = Number(parts[1]);
+      const year = Number(parts[2]);
+
+      return new Date(year, month - 1, day).getTime();
+    }
+
+    const timestamp = new Date(dateValue).getTime();
+    return isNaN(timestamp) ? 0 : timestamp;
+  }
+
+  // Latest date first
+  const sortedData = result.slice(1).sort((a, b) => {
+    return getDateTimestamp(b[1]) - getDateTimestamp(a[1]);
+  });
+
+  return [result[0], ...sortedData];
 }
 
 function backToMainMenu() {
